@@ -149,7 +149,7 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
 
     out.close();
 
-    file::pickFile(file::PickMode::SaveFile, this->m_options, [](std::string result) {
+    file::pickFile(file::PickMode::SaveFile, this->m_options, [](ghc::filesystem::path result) { // I need to find a fix for this before 2.206
         auto path = fs::path(result.c_str());
         #ifdef GEODE_IS_WINDOWS
         auto strPath = geode::utils::string::wideToUtf8(result.c_str());
