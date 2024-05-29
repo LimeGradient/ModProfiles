@@ -59,7 +59,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
         }
 
         try {
-            fs::rename(strPath, fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
+            fs::copy(strPath, fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
         } catch (fs::filesystem_error& e) {
             FLAlertLayer::create("Mod Profiles", fmt::format("Failed to import profile\nError: {}", e.what()), "Ok")->show();
             return;
@@ -158,6 +158,7 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
         #endif
 
         try {
+            log::info("{}.profile", strPath);
             fs::rename(fmt::format("{}/profile.txt", geode::dirs::getModConfigDir()), fmt::format("{}.profile", strPath));
         } catch (fs::filesystem_error& e) {
             FLAlertLayer::create("Mod Profiles", fmt::format("Failed to create profile\nError: {}", e.what()), "Ok")->show();
