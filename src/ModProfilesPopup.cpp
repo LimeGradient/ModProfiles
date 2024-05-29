@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 void ModProfilesPopup::setup() {
     this->m_filter = {
 			"Mod Profile",
-			{".profile"},
+			{".modprofile"},
 		};
 	this->m_options = {
 			.filters = {m_filter},
@@ -20,25 +20,31 @@ void ModProfilesPopup::setup() {
     CCLabelBMFont* title = CCLabelBMFont::create("Mod Profiles", "bigFont.fnt");
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-    title->setPosition({winSize.width/2, winSize.height/2+70});
+    title->setPosition({winSize.width/2, winSize.height/2+90});
 
     m_mainLayer->addChild(title);
     
     ButtonSprite* importSprite = ButtonSprite::create("Import Mods", 200, true, "goldFont.fnt", "GJ_button_01.png", 30, 1);
     ButtonSprite* exportSprite = ButtonSprite::create("Export Mods", 200, true, "goldFont.fnt", "GJ_button_01.png", 30, 1);
+    ButtonSprite* restartSprite = ButtonSprite::create("Restart Game", 200, true, "bigFont.fnt", "GJ_button_03.png", 30, 1);
 
     CCMenuItemSpriteExtra* importButton = CCMenuItemSpriteExtra::create(importSprite, this, menu_selector(ModProfilesPopup::importMods));
-    importButton->setPosition({winSize.width/2, winSize.height/2 - 25});
+    importButton->setPosition({winSize.width/2, winSize.height/2 - 5});
 
     CCMenuItemSpriteExtra* exportButton = CCMenuItemSpriteExtra::create(exportSprite, this, menu_selector(ModProfilesPopup::exportMods));
-    exportButton->setPosition({winSize.width/2, winSize.height/2 - 70});
+    exportButton->setPosition({winSize.width/2, winSize.height/2 - 50});
+
+    CCMenuItemSpriteExtra* restartButton = CCMenuItemSpriteExtra::create(restartSprite, this, menu_selector(ModProfilesPopup::onRestart));
+    restartButton->setPosition({winSize.width/2, winSize.height/2 - 95});
 
     CCMenuItemSpriteExtra* discordButton = CCMenuItemSpriteExtra::create(CCSprite::create("discord-icon.png"_spr), this, menu_selector(ModProfilesPopup::onDiscord));
-    discordButton->setPosition({winSize.width / 2, winSize.height/2 + 20});
+    discordButton->setPosition({winSize.width / 2, winSize.height/2 + 40});
+
 
     m_buttonMenu->addChild(importButton);
     m_buttonMenu->addChild(exportButton);
     m_buttonMenu->addChild(discordButton);
+    m_buttonMenu->addChild(restartButton);
     setTouchEnabled(true);
 }
 
@@ -53,8 +59,8 @@ void ModProfilesPopup::importMods(CCObject* obj) {
         std::string strPath = result.c_str();
         #endif
 
-        if (!strPath.ends_with(".profile")) {
-            FLAlertLayer::create("Mod Profiles", "Failed to import profile\nWrong file type. File should end with .profile", "Ok")->show();
+        if (!strPath.ends_with(".modprofile")) {
+            FLAlertLayer::create("Mod Profiles", "Failed to import profile\nWrong file type. File should end with .modprofile", "Ok")->show();
             return;
         }
 
@@ -69,11 +75,8 @@ void ModProfilesPopup::importMods(CCObject* obj) {
             std::ifstream profile(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
             std::string line;
             if (profile.is_open()) {
-                int i = 0;
                 while (std::getline(profile, line)) {
-                    log::info("I ran {} times", i);
                     repoLinks.push_back(line);
-                    i++;
                 }
                 profile.close();
             } else {
@@ -95,13 +98,13 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                         if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)))) {
                             // web::fetchFile(downloadLink, fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)));
                             
+                            log::info("Mod Name: {} - Mod Link: {}", downloadLink.substr(modName+1), downloadLink);
+
                             web::AsyncWebRequest()
                             .fetch(downloadLink)
-                            .text()
-                            .then([&](std::string const& value) {
-                                std::ofstream out(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)));
-                                out << value;
-                                out.close();
+                            .into(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)))
+                            .then([=](auto value) {
+                                
                             })
                             .expect([&](std::string const& error) {
                                 Notification::create(fmt::format("Failed to download: {}", downloadLink.substr(modName+1)), NotificationIcon::Error)->show();
@@ -112,8 +115,8 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                             return;
                         }
                     })
-                    .expect([](std::string const& error) {
-                        log::error("Error while downloading mods: {}", error);
+                    .expect([=](std::string const& error) {
+                        log::error("Link: {}: Error while downloading mods: {}", link, error);
                     });
         }
         fs::remove(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
@@ -150,7 +153,7 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
 
         std::ofstream out;
 
-        out.open(fmt::format("{}_profile/.profile", strPath), std::ios::app);
+        out.open(fmt::format("{}_profile.modprofile", strPath), std::ios::trunc);
         
         for (std::string link : repoLinks) {
             out << link << "\n";
@@ -172,10 +175,16 @@ void ModProfilesPopup::onDiscord(CCObject* obj) {
     });
 }
 
+void ModProfilesPopup::onRestart(CCObject* obj) {
+    geode::createQuickPopup("Restart", "Are you sure you want to restart?", "Cancel", "Ok", [](auto, bool btn2) {
+        if (btn2) geode::utils::game::restart();
+    });
+}
+
 ModProfilesPopup* ModProfilesPopup::create() {
     auto ret = new ModProfilesPopup();
 
-    if (ret && ret->init(250, 200, "GJ_square02.png", "")) {
+    if (ret && ret->init(250, 275, "GJ_square02.png", "")) {
         ret->autorelease();
         return ret;
     }
