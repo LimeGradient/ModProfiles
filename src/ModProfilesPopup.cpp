@@ -150,7 +150,7 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
 
         std::ofstream out;
 
-        out.open(fmt::format("{}/.profile", strPath), std::ios::app);
+        out.open(fmt::format("{}_profile/.profile", strPath), std::ios::app);
         
         for (std::string link : repoLinks) {
             out << link << "\n";
