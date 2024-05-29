@@ -79,33 +79,22 @@ void ModProfilesPopup::importMods(CCObject* obj) {
         }
         
         for (std::string link : repoLinks) {
-            link.erase(link.begin(), std::next(link.begin(), 19));
-            std::string apiLink = fmt::format("https://api.github.com/repos/{}/releases/latest", link);
             web::AsyncWebRequest()
                 .userAgent("ModProfiles")
-                .fetch(apiLink)
+                .fetch(link)
                 .text()
                 .then([](std::string const& value) {
                     auto json = matjson::parse(value);
-                    log::info("Latest Release Download URL: {}", json["assets"][0]["browser_download_url"].as_string());
+                    size_t modName = json["mod"]["download"].as_string().find_last_of("/");
 
-                    auto modFilePath = fmt::format("{}/{}", geode::dirs::getModsDir(), json["assets"][0]["name"].as_string());
-                    
-                    if (modFilePath.find(".geode") == std::string::npos) {
-                        return;
-                    }
-
-                    if (!fs::exists(modFilePath)) {
-                        web::fetchFile(json["assets"][0]["browser_download_url"].as_string(), modFilePath);
-                        Notification::create(fmt::format("Successfully downloaded: {}", json["assets"][0]["name"].as_string()), NotificationIcon::Success, 1.f)->show();
+                    if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), json["mod"]["download"].as_string().substr(modName+1)))) {
+                        web::fetchFile(json["mod"]["download"].as_string(), fmt::format("{}/{}", geode::dirs::getModsDir(), json["mod"]["download"].as_string().substr(modName+1)));
+                        Notification::create(fmt::format("Successfully downloaded: {}", json["mod"]["download"].as_string().substr(modName+1)), NotificationIcon::Success, 1.f)->show();
                     } else {
                         return;
                     }
                 })
                 .expect([](std::string const& error) {
-                    auto errorJSON = matjson::parse(error);
-                    if (errorJSON["message"].as_string() == "Not Found") return;
-
                     log::error("Error while downloading mods: {}", error);
                 });
         }
@@ -124,12 +113,8 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
         if (buffer == "") continue;
 
         auto modJSON = matjson::parse(buffer);
-        if (modJSON.contains("repository")) {
-            log::info("{}", modJSON["repository"].as_string());
-            repoLinks.push_back(modJSON["repository"].as_string());
-        } else {
-            continue;
-        }
+        auto modVersion = modJSON["version"].as_string().erase(0, 1); // remove the v from version
+        repoLinks.push_back(fmt::format("https://raw.githubusercontent.com/geode-sdk/mods/main/mods-v2/{}/{}/entry.json", modJSON["id"].as_string(), modVersion));
     }
 
     std::ofstream out;  // Clear the file first
