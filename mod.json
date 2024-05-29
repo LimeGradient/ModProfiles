@@ -9,5 +9,10 @@
 	"id": "limegradient.modprofiles",
 	"name": "Mod Profiles",
 	"developer": "LimeGradient",
-	"description": "Share your mods with others!"
+	"description": "Share your mods with others!",
+	"resources": {
+		"sprites": [
+			"resources/*.png"
+		]
+	}
 }

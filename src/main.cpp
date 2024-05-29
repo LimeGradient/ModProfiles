@@ -30,7 +30,7 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 		}
 
 		auto myButton = CCMenuItemSpriteExtra::create(
-			CCSprite::createWithSpriteFrameName("GJ_likeBtn_001.png"),
+			CCSprite::create("mod-profiles-button.png"_spr),
 			this,
 			menu_selector(ModProfilesMenuLayer::onMyButton)
 		);
@@ -46,8 +46,8 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 	}
 
 	void onMyButton(CCObject*) {
-		geode::createQuickPopup("Mod Profiles", "Select your option\nImport Profile: Downloads all mods from a Profile\nExport Profile: Creates a Profile from installed mods", "Import Profile", "Export Profile", [&](bool btn1, bool btn2) {
-			if (!btn2) importMods();
+		geode::createQuickPopup("Mod Profiles", "Select your option\nImport Profile: Downloads all mods from a Profile\nExport Profile: Creates a Profile from installed mods", "Import Profile", "Export Profile", [&](bool btn1, bool btn2) {			
+			if (btn1) importMods();
 			if (btn2) getAllMods();
 		});
 	}
