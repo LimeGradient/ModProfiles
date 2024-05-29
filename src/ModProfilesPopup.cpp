@@ -33,8 +33,12 @@ void ModProfilesPopup::setup() {
     CCMenuItemSpriteExtra* exportButton = CCMenuItemSpriteExtra::create(exportSprite, this, menu_selector(ModProfilesPopup::exportMods));
     exportButton->setPosition({winSize.width/2, winSize.height/2 - 70});
 
+    CCMenuItemSpriteExtra* discordButton = CCMenuItemSpriteExtra::create(CCSprite::create("discord-icon.png"_spr), this, menu_selector(ModProfilesPopup::onDiscord));
+    discordButton->setPosition({winSize.width / 2, winSize.height/2 + 20});
+
     m_buttonMenu->addChild(importButton);
     m_buttonMenu->addChild(exportButton);
+    m_buttonMenu->addChild(discordButton);
     setTouchEnabled(true);
 }
 
@@ -77,7 +81,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
             log::info("Unable to open Profile");
             return;
         }
-        
+
         for (std::string link : repoLinks) {
             web::AsyncWebRequest()
                 .userAgent("ModProfiles")
@@ -85,11 +89,26 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                 .text()
                 .then([](std::string const& value) {
                     auto json = matjson::parse(value);
-                    size_t modName = json["mod"]["download"].as_string().find_last_of("/");
+                    auto downloadLink = json["mod"]["download"].as_string();
 
-                    if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), json["mod"]["download"].as_string().substr(modName+1)))) {
-                        web::fetchFile(json["mod"]["download"].as_string(), fmt::format("{}/{}", geode::dirs::getModsDir(), json["mod"]["download"].as_string().substr(modName+1)));
-                        Notification::create(fmt::format("Successfully downloaded: {}", json["mod"]["download"].as_string().substr(modName+1)), NotificationIcon::Success, 1.f)->show();
+                    size_t modName = downloadLink.find_last_of("/");
+
+                    if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)))) {
+                        // web::fetchFile(downloadLink, fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)));
+                        
+                        web::AsyncWebRequest()
+                        .fetch(downloadLink)
+                        .text()
+                        .then([&](std::string const& value) {
+                            std::ofstream out(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)));
+                            out << value;
+                            out.close();
+                        })
+                        .expect([&](std::string const& error) {
+                            Notification::create(fmt::format("Failed to download: {}", downloadLink.substr(modName+1)), NotificationIcon::Error)->show();
+                        });
+
+                        Notification::create(fmt::format("Successfully downloaded: {}", downloadLink.substr(modName+1)), NotificationIcon::Success, 1.f)->show();
                     } else {
                         return;
                     }
@@ -98,6 +117,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                     log::error("Error while downloading mods: {}", error);
                 });
         }
+        fs::remove(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
     }
 }
 
@@ -129,7 +149,7 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
 
     out.close();
 
-    file::pickFile(file::PickMode::SaveFile, this->m_options, [](ghc::filesystem::path result) {
+    file::pickFile(file::PickMode::SaveFile, this->m_options, [](std::string result) {
         auto path = fs::path(result.c_str());
         #ifdef GEODE_IS_WINDOWS
         auto strPath = geode::utils::string::wideToUtf8(result.c_str());
@@ -143,9 +163,17 @@ void ModProfilesPopup::exportMods(CCObject* obj) {
             FLAlertLayer::create("Mod Profiles", fmt::format("Failed to create profile\nError: {}", e.what()), "Ok")->show();
         }
 
-        geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success);
+        geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
     }, []() {
-        FLAlertLayer::create("Mod Profiles", "Failed to create profile\nError while moving file.", "Ok")->show();
+        FLAlertLayer::create("Mod Profiles", "Failed to create profile\nFile Operation Canceled", "Ok")->show();
+    });
+}
+
+void ModProfilesPopup::onDiscord(CCObject* obj) {
+    geode::createQuickPopup("Discord", "For support, sharing modpacks, and more join the Discord!", "Cancel", "Ok", [](auto, bool btn2) {
+        if (btn2) {
+            web::openLinkInBrowser("https://discord.gg/44ANAhXz7r");
+        }
     });
 }
 

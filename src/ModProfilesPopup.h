@@ -9,4 +9,5 @@ class ModProfilesPopup : public BetterFLAlert {
         static ModProfilesPopup* create();
         void exportMods(CCObject*);
         void importMods(CCObject*);
+        void onDiscord(CCObject*);
 };
