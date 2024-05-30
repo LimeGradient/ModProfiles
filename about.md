@@ -6,4 +6,4 @@ This mod will require a internet connection to import profiles.
 
 For support, join the [Discord](https://discord.gg/44ANAhXz7r)
 
-Thanks to Krintop and [Dasshu](https://x.com/DasshuGames) for the artwork!
+Thanks to Krintop and [Dasshu](https://twitter.com/DasshuGames) for the artwork!

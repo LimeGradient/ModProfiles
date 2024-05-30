@@ -6,5 +6,5 @@ For support, join the [Discord](https://discord.gg/44ANAhXz7r)
 
 Special Thanks:
 * Krintop (Artwork)
-* [Dasshu](https://x.com/DasshuGames) (Artwork)
+* [Dasshu](https://twitter.com/DasshuGames) (Artwork)
 * ninXout (Testing)
