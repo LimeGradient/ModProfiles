@@ -34,4 +34,3 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 		popup->show();
 	}
 };
-
