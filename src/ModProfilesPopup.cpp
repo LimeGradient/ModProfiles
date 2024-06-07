@@ -49,7 +49,7 @@ void ModProfilesPopup::setup() {
 }
 
 void ModProfilesPopup::importMods(CCObject* obj) {
-    file::pickFile(file::PickMode::OpenFile, this->m_options, [this](ghc::filesystem::path result) {
+    file::pickFile(file::PickMode::OpenFile, this->m_options, [this](fs::path result) {
         std::vector<std::string> repoLinks;
 
         auto path = fs::path(result.c_str());
@@ -84,7 +84,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                 return;
             }
 
-            for (std::string link : repoLinks) {
+            /* for (std::string link : repoLinks) {
                 web::AsyncWebRequest()
                     .userAgent("ModProfiles")
                     .fetch(link)
@@ -120,7 +120,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                     });
         }
         fs::remove(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
-    }
+    */}
     }, [=]() {
         FLAlertLayer::create("Mod Profiles", "Failed to import profile\nFile Selection Canceled", "Ok")->show();
         return;
@@ -128,7 +128,7 @@ void ModProfilesPopup::importMods(CCObject* obj) {
 }
 
 void ModProfilesPopup::exportMods(CCObject* obj) {
-    file::pickFile(file::PickMode::SaveFile, this->m_options, [](ghc::filesystem::path result) { // I need to find a fix for this before 2.206
+    file::pickFile(file::PickMode::SaveFile, this->m_options, [](fs::path result) { // I need to find a fix for this before 2.206
         std::vector<std::string> repoLinks;
         std::string profileFilePath;
 

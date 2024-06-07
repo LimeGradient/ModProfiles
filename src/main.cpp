@@ -3,10 +3,11 @@
 #include <Geode/Geode.hpp>
 #include "ModProfilesPopup.h"
 
+#include <Geode/modify/MenuLayer.hpp>
+
 using namespace geode::prelude;
 namespace fs = std::filesystem;
 
-#include <Geode/modify/MenuLayer.hpp>
 class $modify(ModProfilesMenuLayer, MenuLayer) {
 	bool init() {
 		if (!MenuLayer::init()) {
