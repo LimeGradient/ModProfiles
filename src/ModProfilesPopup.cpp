@@ -57,8 +57,12 @@ void ModProfilesPopup::setup() {
     setTouchEnabled(true);
 }
 
-void ModProfilesPopup::importMods(CCObject* obj) {
-    std::vector<std::string> modDownloadLinks;
+FileTask importFromFile() {
+    return file::pick(file::PickMode::OpenFile, ModProfilesPopup::m_options);
+}
+
+void downloadMods(FileTask::Event* e) {
+    std::vector<std::string> downloadLinks;
 
     m_webTaskListener.bind([=] (web::WebTask::Event* e) {
         if (web::WebResponse* res = e->getValue()) {
@@ -71,8 +75,10 @@ void ModProfilesPopup::importMods(CCObject* obj) {
                 m_downloadFileListener.bind([=] (web::WebTask::Event* ev) {
                     if (web::WebResponse* response = e->getValue()) {
                         if (response->ok()) {
-                            response->into(fmt::format("{}/{}", geode::dirs::getModsDir(), modID + ".geode"));
-                            Notification::create(fmt::format("Successfully installed: {}", modID), NotificationIcon::Success);
+                            if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), modID + ".geode"))) {
+                                response->into(fmt::format("{}/{}", geode::dirs::getModsDir(), modID + ".geode"));
+                                Notification::create(fmt::format("Successfully installed: {}", modID), NotificationIcon::Success);
+                            }
                         }
                     } else if (e->isCancelled()) {
                         Notification::create(fmt::format("Error while downloading mod: {}", modID), NotificationIcon::Error);
@@ -86,10 +92,28 @@ void ModProfilesPopup::importMods(CCObject* obj) {
         }
     });
 
-    
+    if (auto result = e->getValue()) {
+        if (result->isOk()) {
+            auto path = result->unwrap();
+            std::ifstream modProfileFile(path);
+            std::string line;
+            while (std::getline(modProfileFile, line)) {
+                downloadLinks.push_back(line);
+            }
 
-    auto req = web::WebRequest();
-    m_webTaskListener.setFilter(req.get("https://api.geode-sdk.org/v1/mods/geode.devtools"));
+            for (std::string downloadLink : downloadLinks) {
+                auto req = web::WebRequest();
+                m_webTaskListener.setFilter(req.get(downloadLink));
+            }
+        }
+    }
+}
+
+void ModProfilesPopup::importMods(CCObject* obj) {
+    m_fileTaskListener.bind([=](auto* e) {
+        downloadMods(e);
+    });
+    m_fileTaskListener.setFilter(importFromFile());
 }
 
 FileTask exportToFile() {
