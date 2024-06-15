@@ -1,3 +1,6 @@
+# v1.1.1
+* Ported to GD 2.206
+
 # v1.1.0
 * Optimized Mod Downloading Further (No longer lags while downloading)
 * Added Discord Button

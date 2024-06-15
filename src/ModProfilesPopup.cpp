@@ -146,9 +146,8 @@ void exportFilePick(FileTask::Event* e) {
                 }
 
                 out.close();
-
-                geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
             }
+            geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
         }
     } else if (e->isCancelled()) {
         FLAlertLayer::create("Mod Profiles", "Failed to create profile\nFile Operation Canceled", "Ok")->show();
