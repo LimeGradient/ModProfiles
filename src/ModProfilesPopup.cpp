@@ -3,20 +3,29 @@
 
 #include <Geode/utils/string.hpp>
 #include <Geode/utils/web.hpp>
+#include <Geode/utils/file.hpp>
 
 #include <matjson.hpp>
 
 namespace fs = std::filesystem;
 
-void ModProfilesPopup::setup() {
-    this->m_filter = {
-			"Mod Profile",
-			{".modprofile"},
-		};
-	this->m_options = {
-			.filters = {m_filter},
-	};
+using FileTask = Task<geode::Result<fs::path>>;
 
+const file::FilePickOptions ModProfilesPopup::m_options = {
+    std::nullopt,
+    {
+        {
+            "Mod Profiles",
+            {".modprofile"}
+        }
+    }
+};
+
+EventListener<FileTask> m_fileTaskListener;
+EventListener<web::WebTask> m_webTaskListener;
+EventListener<web::WebTask> m_downloadFileListener;
+
+void ModProfilesPopup::setup() {
     CCLabelBMFont* title = CCLabelBMFont::create("Mod Profiles", "bigFont.fnt");
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
@@ -49,122 +58,84 @@ void ModProfilesPopup::setup() {
 }
 
 void ModProfilesPopup::importMods(CCObject* obj) {
-    file::pickFile(file::PickMode::OpenFile, this->m_options, [this](fs::path result) {
-        std::vector<std::string> repoLinks;
+    std::vector<std::string> modDownloadLinks;
 
-        auto path = fs::path(result.c_str());
-        #ifdef GEODE_IS_WINDOWS
-        auto strPath = geode::utils::string::wideToUtf8(result.c_str());
-        #else
-        std::string strPath = result.c_str();
-        #endif
+    m_webTaskListener.bind([=] (web::WebTask::Event* e) {
+        if (web::WebResponse* res = e->getValue()) {
+            if (res->ok()) {
+                auto modJSON = res->json();
+                log::info("holy shit dfoewsnkoad link: {}", modJSON.unwrap()["payload"]["versions"].as_array().back()["download_link"].as_string());
+                auto link = modJSON.unwrap()["payload"]["versions"].as_array().back()["download_link"].as_string();
+                auto modID = modJSON.unwrap()["payload"]["versions"].as_array().back()["mod_id"].as_string();
 
-        if (!strPath.ends_with(".modprofile")) {
-            FLAlertLayer::create("Mod Profiles", "Failed to import profile\nWrong file type. File should end with .modprofile", "Ok")->show();
-            return;
-        }
-
-        try {
-            fs::copy(strPath, fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()), fs::copy_options::overwrite_existing);
-        } catch (fs::filesystem_error& e) {
-            FLAlertLayer::create("Mod Profiles", fmt::format("Failed to import profile\nError: {}", e.what()), "Ok")->show();
-            return;
-        }
-
-        if (fs::exists(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()))) {
-            std::ifstream profile(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
-            std::string line;
-            if (profile.is_open()) {
-                while (std::getline(profile, line)) {
-                    repoLinks.push_back(line);
-                }
-                profile.close();
-            } else {
-                log::info("Unable to open Profile");
-                return;
-            }
-
-            /* for (std::string link : repoLinks) {
-                web::AsyncWebRequest()
-                    .userAgent("ModProfiles")
-                    .fetch(link)
-                    .text()
-                    .then([](std::string const& value) {
-                        auto json = matjson::parse(value);
-                        auto downloadLink = json["mod"]["download"].as_string();
-
-                        size_t modName = downloadLink.find_last_of("/");
-
-                        if (!fs::exists(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)))) {
-                            // web::fetchFile(downloadLink, fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)));
-                            
-                            log::info("Mod Name: {} - Mod Link: {}", downloadLink.substr(modName+1), downloadLink);
-
-                            web::AsyncWebRequest()
-                            .fetch(downloadLink)
-                            .into(fmt::format("{}/{}", geode::dirs::getModsDir(), downloadLink.substr(modName+1)))
-                            .then([=](auto value) {
-                                
-                            })
-                            .expect([&](std::string const& error) {
-                                Notification::create(fmt::format("Failed to download: {}", downloadLink.substr(modName+1)), NotificationIcon::Error)->show();
-                            });
-
-                            Notification::create(fmt::format("Successfully downloaded: {}", downloadLink.substr(modName+1)), NotificationIcon::Success, 1.f)->show();
-                        } else {
-                            return;
+                m_downloadFileListener.bind([=] (web::WebTask::Event* ev) {
+                    if (web::WebResponse* response = e->getValue()) {
+                        if (response->ok()) {
+                            response->into(fmt::format("{}/{}", geode::dirs::getModsDir(), modID + ".geode"));
+                            Notification::create(fmt::format("Successfully installed: {}", modID), NotificationIcon::Success);
                         }
-                    })
-                    .expect([=](std::string const& error) {
-                        log::error("Link: {}: Error while downloading mods: {}", link, error);
-                    });
+                    } else if (e->isCancelled()) {
+                        Notification::create(fmt::format("Error while downloading mod: {}", modID), NotificationIcon::Error);
+                    }
+                });
+                auto fileReq = web::WebRequest();
+                m_downloadFileListener.setFilter(fileReq.get(link));
+            }
+        } else if (e->isCancelled()) {
+            log::info("Web requestist went fucvkyt wucjky");
         }
-        fs::remove(fmt::format("{}/imported_profile.txt", geode::dirs::getModConfigDir()));
-    */}
-    }, [=]() {
-        FLAlertLayer::create("Mod Profiles", "Failed to import profile\nFile Selection Canceled", "Ok")->show();
-        return;
     });
+
+    
+
+    auto req = web::WebRequest();
+    m_webTaskListener.setFilter(req.get("https://api.geode-sdk.org/v1/mods/geode.devtools"));
+}
+
+FileTask exportToFile() {
+    return file::pick(file::PickMode::SaveFile, ModProfilesPopup::m_options);
+}
+
+void exportFilePick(FileTask::Event* e) {
+    if (auto result = e->getValue()) {
+        if (result->isOk()) {
+            auto path = result->unwrap();
+
+            std::vector<std::string> repoLinks;
+            for (const auto& unzippedMod : fs::directory_iterator(geode::dirs::getModRuntimeDir().c_str())) {
+
+                std::ifstream modJSONFile(fmt::format("{}/mod.json", unzippedMod.path()));
+                std::string buffer ((std::istreambuf_iterator<char>(modJSONFile)),
+                                    (std::istreambuf_iterator<char>()));
+
+                if (buffer == "") continue;
+
+                auto modJSON = matjson::parse(buffer);
+                repoLinks.push_back(fmt::format("https://api.geode-sdk.org/v1/mods/{}", modJSON["id"].as_string()));
+
+                std::ofstream out;
+
+                out.open(fmt::format("{}_profile.modprofile", path), std::ios::trunc);
+                
+                for (std::string link : repoLinks) {
+                    out << link << "\n";
+                }
+
+                out.close();
+
+                geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
+            }
+        }
+    } else if (e->isCancelled()) {
+        FLAlertLayer::create("Mod Profiles", "Failed to create profile\nFile Operation Canceled", "Ok")->show();
+    }
 }
 
 void ModProfilesPopup::exportMods(CCObject* obj) {
-    file::pickFile(file::PickMode::SaveFile, this->m_options, [](fs::path result) { // I need to find a fix for this before 2.206
-        std::vector<std::string> repoLinks;
-        std::string profileFilePath;
-
-        auto path = fs::path(result.c_str());
-        #ifdef GEODE_IS_WINDOWS
-        auto strPath = geode::utils::string::wideToUtf8(result.c_str());
-        #else
-        std::string strPath = result.c_str();
-        #endif
-
-        for (const auto& unzippedMod : fs::directory_iterator(geode::dirs::getModRuntimeDir().c_str())) {
-            std::ifstream modJSONFile(fmt::format("{}/mod.json", unzippedMod.path()));
-            std::string buffer ((std::istreambuf_iterator<char>(modJSONFile)),
-                                (std::istreambuf_iterator<char>()));
-
-            if (buffer == "") continue;
-
-            auto modJSON = matjson::parse(buffer);
-            auto modVersion = modJSON["version"].as_string().erase(0, 1); // remove the v from version
-            repoLinks.push_back(fmt::format("https://raw.githubusercontent.com/geode-sdk/mods/main/mods-v2/{}/{}/entry.json", modJSON["id"].as_string(), modVersion));
-        }
-
-        std::ofstream out;
-
-        out.open(fmt::format("{}_profile.modprofile", strPath), std::ios::trunc);
-        
-        for (std::string link : repoLinks) {
-            out << link << "\n";
-        }
-
-        out.close();
-
-        geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
-    }, []() {
-        FLAlertLayer::create("Mod Profiles", "Failed to create profile\nFile Operation Canceled", "Ok")->show();
+    m_fileTaskListener.bind([=](auto* e) {
+        exportFilePick(e);
     });
+    m_fileTaskListener.setFilter(exportToFile());
 }
 
 void ModProfilesPopup::onDiscord(CCObject* obj) {
