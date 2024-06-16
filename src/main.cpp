@@ -19,7 +19,7 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 			this,
 			menu_selector(ModProfilesMenuLayer::onMyButton)
 		);
-		myButton->setScale(1.25f);
+		myButton->setScale(10.25f);
 
 		auto menu = this->getChildByID("bottom-menu");
 		menu->addChild(myButton);
