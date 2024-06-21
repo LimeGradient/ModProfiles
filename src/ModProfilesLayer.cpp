@@ -102,6 +102,10 @@ bool ModProfilesLayer::init() {
     return true;
 }
 
+void ModProfilesLayer::keyBackClicked() {
+    this->onClose(nullptr);
+}
+
 void ModProfilesLayer::onClose(CCObject*) {
     auto mainMenu = MenuLayer::scene(false);
     CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, mainMenu));
