@@ -9,7 +9,7 @@ protected:
     ScrollLayer* scrollLayer = nullptr;
     CCSprite* outline;
 
-    void keyBackClicked
+    void keyBackClicked() override;
 
 public:
     static ModProfilesLayer* create();
