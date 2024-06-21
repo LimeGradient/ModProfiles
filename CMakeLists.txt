@@ -9,6 +9,7 @@ project(ModProfiles VERSION 1.0.0)
 file(GLOB_RECURSE SOURCES
     src/*.cpp src/*.h
     src/geode_impl/*.cpp src/geode_impl/*.h
+    src/lists/*.cpp src/lists/*.h
 )
 
 include_directories(src)
