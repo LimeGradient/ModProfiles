@@ -3,12 +3,13 @@
 #include <Geode/Geode.hpp>
 using namespace geode::prelude;
 
-class ModProfilesLayer : public cocos2d::CCLayer {
+class ModProfilesLayer : public CCLayer {
 protected:
-    cocos2d::CCSprite* m_background;
+    CCSprite* m_background;
     ScrollLayer* scrollLayer = nullptr;
-
     CCSprite* outline;
+
+    void keyBackClicked
 
 public:
     static ModProfilesLayer* create();
