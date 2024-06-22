@@ -8,10 +8,13 @@ protected:
     CCSprite* m_background;
     ScrollLayer* scrollLayer = nullptr;
     CCSprite* outline;
-
+    CCNode* m_frame;
+    
     void keyBackClicked() override;
-
+    void switchList(CCNode* list);
 public:
+    std::vector<CCMenuItemSpriteExtra*> m_tabs;
+
     static ModProfilesLayer* create();
     static cocos2d::CCScene* scene();
     bool init();

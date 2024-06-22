@@ -10,6 +10,7 @@ https://github.com/geode-sdk/geode
 using namespace geode::prelude;
 
 #include "ModProfilesLayer.h"
+#include "lists/ExportProfilesList.h"
 #include "geode_impl/GeodeTabSprite.h"
 #include "geode_impl/SwelvyBG.h"
 
@@ -40,45 +41,45 @@ bool ModProfilesLayer::init() {
     backMenu->setZOrder(1);
     this->addChildAtPosition(backMenu, Anchor::TopLeft, ccp(12, -25), false);
 
-    auto frame = CCNode::create();
-    frame->setID("mod-profiles-frame");
-    frame->setAnchorPoint({.5f, .5f});
-    frame->setContentSize({380, 205});
+    m_frame = CCNode::create();
+    m_frame->setID("mod-profiles-frame");
+    m_frame->setAnchorPoint({.5f, .5f});
+    m_frame->setContentSize({380, 205});
 
     auto frameBG = CCLayerColor::create(ColorProvider::get()->color("geode-bg"_spr));
     frameBG->setID("frame-bg");
-    frameBG->setContentSize(frame->getContentSize());
+    frameBG->setContentSize(m_frame->getContentSize());
     frameBG->ignoreAnchorPointForPosition(false);
-    frame->addChildAtPosition(frameBG, Anchor::Center);
+    m_frame->addChildAtPosition(frameBG, Anchor::Center);
 
     auto tabsTop = CCSprite::createWithSpriteFrameName("geode-top.png"_spr);
     tabsTop->setID("frame-top-sprite");
     tabsTop->setAnchorPoint({ .5f, .0f });
-    frame->addChildAtPosition(tabsTop, Anchor::Top, ccp(0, -2));
+    m_frame->addChildAtPosition(tabsTop, Anchor::Top, ccp(0, -2));
 
     auto tabsLeft = CCSprite::createWithSpriteFrameName("geode-side.png"_spr);
     tabsLeft->setID("frame-left-sprite");
-    tabsLeft->setScaleY(frame->getContentHeight() / tabsLeft->getContentHeight());
-    frame->addChildAtPosition(tabsLeft, Anchor::Left, ccp(6, 0));
+    tabsLeft->setScaleY(m_frame->getContentHeight() / tabsLeft->getContentHeight());
+    m_frame->addChildAtPosition(tabsLeft, Anchor::Left, ccp(6, 0));
 
     auto tabsRight = CCSprite::createWithSpriteFrameName("geode-side.png"_spr);
     tabsRight->setID("frame-right-sprite");
     tabsRight->setFlipX(true);
-    tabsRight->setScaleY(frame->getContentHeight() / tabsRight->getContentHeight());
-    frame->addChildAtPosition(tabsRight, Anchor::Right, ccp(-6, 0));
+    tabsRight->setScaleY(m_frame->getContentHeight() / tabsRight->getContentHeight());
+    m_frame->addChildAtPosition(tabsRight, Anchor::Right, ccp(-6, 0));
 
     auto tabsBottom = CCSprite::createWithSpriteFrameName("geode-bottom.png"_spr);
     tabsBottom->setID("frame-bottom-sprite");
     tabsBottom->setAnchorPoint({ .5f, 1.f });
-    frame->addChildAtPosition(tabsBottom, Anchor::Bottom, ccp(0, 2));
+    m_frame->addChildAtPosition(tabsBottom, Anchor::Bottom, ccp(0, 2));
 
-    this->addChildAtPosition(frame, Anchor::Center, ccp(0, -10), false);
+    this->addChildAtPosition(m_frame, Anchor::Center, ccp(0, -10), false);
 
     auto mainTabs = CCMenu::create();
     mainTabs->setID("tabs-menu");
     mainTabs->setContentWidth(tabsTop->getContentWidth() - 45);
     mainTabs->setAnchorPoint({ .5f, .0f });
-    mainTabs->setPosition(frame->convertToWorldSpace(tabsTop->getPosition() + ccp(0, 8)));
+    mainTabs->setPosition(m_frame->convertToWorldSpace(tabsTop->getPosition() + ccp(0, 8)));
     // Increment touch priority so the mods in the list don't override
     mainTabs->setTouchPriority(-150);
 
@@ -94,12 +95,21 @@ bool ModProfilesLayer::init() {
         );
         btn->setID(std::get<2>(item));
         mainTabs->addChild(btn);
+        m_tabs.push_back(btn);
     }
 
     mainTabs->setLayout(RowLayout::create());
     this->addChild(mainTabs);
 
+    auto list = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
+    list->setPosition(m_frame->getContentSize() / 2);
+    m_frame->addChild(list);
+
     return true;
+}
+
+void ModProfilesLayer::switchList(CCNode* list) {
+
 }
 
 void ModProfilesLayer::keyBackClicked() {
