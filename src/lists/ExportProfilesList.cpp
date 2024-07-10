@@ -5,6 +5,10 @@
 #include <Geode/Loader.hpp>
 using namespace geode::prelude;
 
+bool sort_by_name(const Mod* modA, const Mod* modB) {
+    return modA->getName() < modB->getName();
+}
+
 bool ExportProfilesList::init(CCSize const& size) {
     if (!CCNode::init()) return false;
 
@@ -29,13 +33,25 @@ bool ExportProfilesList::init(CCSize const& size) {
     m_topContainer->setAnchorPoint({ .5f, 1.f });
 
     float totalHeight = .0f;
-    for (auto mod : Loader::get()->getAllMods()) {
+
+    std::list<Mod*> modsList;
+    std::ranges::copy(Loader::get()->getAllMods(), std::back_inserter(modsList));
+    modsList.sort(sort_by_name);
+
+    for (auto mod : modsList) {
         auto modCell = ModCell::create(mod);
-        totalHeight += modCell->getScaledContentHeight();
-        modCell->setPosition(50.f, totalHeight);
+        modCell->setContentWidth(this->getScaledContentWidth());
+        modCell->m_bg->setContentWidth(this->getScaledContentWidth() + 150.f);
+        modCell->m_infoContainer->setPositionX(modCell->m_bg->getScaledContentWidth() / 2);
+        modCell->m_viewMenu->setPositionX(modCell->m_bg->getScaledContentWidth() - 50.f);
+        modCell->m_enableToggle->setPositionX(630.f);
+        
+        totalHeight += modCell->getScaledContentSize().height;
+        modCell->setPosition(115.f, totalHeight);
         m_list->m_contentLayer->addChild(modCell);
+        m_list->m_contentLayer->updateLayout();
+        m_list->updateLayout();
     }
-    m_list->m_contentLayer->updateLayout();
 
     return true;
 }

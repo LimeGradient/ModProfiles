@@ -5,6 +5,12 @@ using namespace geode::prelude;
 
 class ModCell : public CCNode {
 protected:
+    bool init(Mod* mod);
+    void updateState();
+
+    void onEnable(CCObject*);
+
+public:
     CCScale9Sprite* m_bg;
     CCNode* m_logo;
     CCNode* m_infoContainer;
@@ -16,12 +22,8 @@ protected:
     CCMenu* m_viewMenu;
     CCMenuItemToggler* m_enableToggle = nullptr;
 
-    bool init(Mod* mod);
-    void updateState();
+    Mod* m_mod;
 
-    void onEnable(CCObject*);
-
-public:
     static ModCell* create(Mod* mod);
     void updateSize(float width, bool big);
 };
