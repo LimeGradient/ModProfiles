@@ -10,6 +10,7 @@ https://github.com/geode-sdk/geode
 using namespace geode::prelude;
 
 #include "ModProfilesLayer.h"
+#include "SettingsPopup.h"
 #include "lists/ExportProfilesList.h"
 #include "geode_impl/GeodeTabSprite.h"
 #include "geode_impl/SwelvyBG.h"
@@ -101,6 +102,29 @@ bool ModProfilesLayer::init() {
     mainTabs->setLayout(RowLayout::create());
     this->addChild(mainTabs);
 
+    auto actionsMenu = CCMenu::create();
+    actionsMenu->setID("actions-menu");
+    actionsMenu->setContentHeight(200.f);
+    actionsMenu->setAnchorPoint({.5f, .0f});
+
+    CircleButtonSprite* settingsButtonSpr = CircleButtonSprite::create(
+        CCSprite::create("settings-icon.png"_spr),
+        CircleBaseColor::DarkPurple,
+        CircleBaseSize::Medium
+    );
+    settingsButtonSpr->setTopRelativeScale(1.f);
+    auto settingsBtn = CCMenuItemSpriteExtra::create(
+        settingsButtonSpr, this, menu_selector(ModProfilesLayer::onSettings)
+    );
+    settingsBtn->setID("settings-button");
+    actionsMenu->addChild(settingsBtn);
+
+    actionsMenu->setLayout(
+        ColumnLayout::create()
+            ->setAxisAlignment(AxisAlignment::Start)
+    );
+    this->addChildAtPosition(actionsMenu, Anchor::BottomLeft, ccp(35, 12), false);
+
     auto list = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
     list->setPosition(m_frame->getContentSize() / 2);
     m_frame->addChild(list);
@@ -119,6 +143,29 @@ void ModProfilesLayer::keyBackClicked() {
 void ModProfilesLayer::onClose(CCObject*) {
     auto mainMenu = MenuLayer::scene(false);
     CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, mainMenu));
+}
+
+void ModProfilesLayer::onSettings(CCObject*) {
+    SettingsPopup::create()->show();
+}
+
+void ModProfilesLayer::onTab(CCObject* sender) {
+    auto senderNode = static_cast<CCNode*>(sender);
+    auto id = senderNode->getID();
+
+    auto setSelectedTab = [=](std::string id) {
+        for (auto tab : m_tabs) {
+            bool selected;
+            if (id == tab->getID()) {
+                
+            }
+        }
+    };
+
+    // wow this is dumb but it is what it is
+    if (id == "export-button") {
+        auto list = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
+    }
 }
 
 ModProfilesLayer* ModProfilesLayer::create() {

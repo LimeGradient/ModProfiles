@@ -19,4 +19,6 @@ public:
     static cocos2d::CCScene* scene();
     bool init();
     void onClose(CCObject*);
+    void onSettings(CCObject*);
+    void onTab(CCObject* sender);
 };

@@ -99,6 +99,9 @@ bool ModCell::init(Mod* mod) {
     this->addChild(m_infoContainer);
     this->setContentSize(CCSize{m_bg->getScaledContentWidth(), m_bg->getScaledContentHeight()});
     m_infoContainer->setContentSize(this->getScaledContentSize());
+    this->setID(mod->getID());
+
+    return true;
 }
 
 void ModCell::onEnable(CCObject* sender) {

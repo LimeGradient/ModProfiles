@@ -1,11 +1,11 @@
 {
-	"geode": "3.2.0",
+	"geode": "3.7.0",
 	"gd": {
 		"android": "2.206",
 		"win": "2.206",
 		"mac": "2.206"
 	},
-	"version": "v1.1.1",
+	"version": "v2.0.0",
 	"id": "limegradient.modprofiles",
 	"name": "Mod Profiles",
 	"developer": "LimeGradient",
@@ -18,7 +18,8 @@
 			]
 		},
 		"sprites": [
-			"resources/geode/swelve/*.png"
+			"resources/geode/swelve/*.png",
+			"resources/geode/buttons/*.png"
 		]
 	}
 }
