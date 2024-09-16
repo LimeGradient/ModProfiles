@@ -1,4 +1,4 @@
-# v1.2
+# v2.0.0
 - Added Packs Menu
     - Allows the user to have many packs and be able to switch between them.
 - Added Pack Index Menu

@@ -4,11 +4,41 @@
 #include <Geode/Geode.hpp>
 #include <Geode/Loader.hpp>
 #include <Geode/Utils/web.hpp>
+
+#include <zip.h>
+
 using namespace geode::prelude;
 
 bool sort_by_name(const Mod* modA, const Mod* modB) {
     return modA->getName() < modB->getName();
 }
+
+int getIndex(std::vector<std::string> vec, std::string element) {
+    auto it = std::find(vec.begin(), vec.end(), element);
+    if (it != vec.end()) {
+        int index = it - vec.begin();
+        return index;
+    }
+    else {
+        return -1;
+    }
+}
+
+class Zip {
+public:
+    void zipFiles(std::string zipPath, std::vector<std::string> files, std::vector<std::string> modNames) {
+        struct zip_t* zip = zip_open(fmt::format("{}.zip", zipPath).c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
+        {
+            for (auto file : files) {
+                log::info("zipping file: {}", file);
+                zip_entry_open(zip, modNames.at(getIndex(files, file)).c_str());
+                zip_entry_fwrite(zip, file.c_str());
+                zip_entry_close(zip);
+            }
+        }
+        zip_close(zip);
+    }
+};
 
 EventListener<FileTask> m_fileTaskListener;
 EventListener<web::WebTask> m_webTaskListener;
@@ -119,35 +149,33 @@ void ExportProfilesList::exportProfile(FileTask::Event* e) {
 }
 
 void ExportProfilesList::exportProfileWithLocalMods(FileTask::Event* e) {
-    std::vector<std::string> modLinks;
+    std::vector<std::string> toggledMods;
+    std::vector<std::string> filePaths;
+    std::vector<std::string> modFilenames;
+    Zip* zip = new Zip();
 
     if (auto result = e->getValue()) {
         if (result->isOk()) {
             auto path = result->unwrap();
-            CCObject* obj;
-
-            CCARRAY_FOREACH(m_list->m_contentLayer->getChildren(), obj) {
-                auto* node = static_cast<CCNode*>(obj);
-                CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(node->getChildByID("view-menu")->getChildByID("enable-toggler"));
-                m_webTaskListener.bind([=] (web::WebTask::Event* e) {
-                    if (web::WebResponse* res = e->getValue()) {
-                        if (res->ok()) {
-                            auto modJSON = res->json();
-                            if (modJSON.unwrap()["error"] == "") {
-                                log::info("{} isnt local", node->getID());
-                            } else if (modJSON.unwrap()["error"] != "") {
-                                log::info("{} is local", node->getID());
-                            }
-                        }
-                    }
-                });
-
+            for (auto obj : CCArrayExt<CCNode*>(m_list->m_contentLayer->getChildren())) {
+                CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(obj->getChildByIDRecursive("enable-toggler"));
                 if (toggler->isToggled()) {
-                    auto req = web::WebRequest();
-                    m_webTaskListener.setFilter(req.get(fmt::format("https://api.geode-sdk.org/v1/mods/{}", node->getID())));
+                    toggledMods.push_back(obj->getID());
                 }
             }
+            for (auto file : fs::directory_iterator(dirs::getModsDir())) {
+                for (auto mod : toggledMods) {
+                    if (file.path().filename().string() == fmt::format("{}.geode", mod)) {
+                        filePaths.push_back(file.path().string());
+                        modFilenames.push_back(fmt::format("{}.geode", mod));
+                    }
+                }
+            }
+            zip->zipFiles(path.string(), filePaths, modFilenames);
+            geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
         }
+    } else if (e->isCancelled()) {
+        geode::Notification::create("File Operation Cancelled", geode::NotificationIcon::Error)->show();
     }
 }
 
@@ -158,7 +186,6 @@ void ExportProfilesList::onExport(CCObject*) {
         } else {
             exportProfile(e);
         }
-        exportProfile(e);
     });
     m_fileTaskListener.setFilter(exportToFile());
 }

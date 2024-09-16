@@ -59,6 +59,7 @@ CCNode* SettingsPopup::createBoolSetting(std::string title, std::string id, CCMe
 
     auto toggler = CCMenuItemToggler::createWithStandardSprites(parentMenu, menu_selector(SettingsPopup::onEnable), 1.f);
     toggler->setID("settings-toggler");
+    toggler->toggle(Mod::get()->getSavedValue<bool>(id));
     menu->addChild(toggler);
 
     menu->updateLayout();
