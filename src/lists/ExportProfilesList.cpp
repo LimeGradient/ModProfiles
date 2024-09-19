@@ -1,44 +1,16 @@
 #include "ExportProfilesList.h"
 #include "ModCell.h"
+#include "utils/ziputils.h"
 
 #include <Geode/Geode.hpp>
 #include <Geode/Loader.hpp>
 #include <Geode/Utils/web.hpp>
-
-#include <zip.h>
 
 using namespace geode::prelude;
 
 bool sort_by_name(const Mod* modA, const Mod* modB) {
     return modA->getName() < modB->getName();
 }
-
-int getIndex(std::vector<std::string> vec, std::string element) {
-    auto it = std::find(vec.begin(), vec.end(), element);
-    if (it != vec.end()) {
-        int index = it - vec.begin();
-        return index;
-    }
-    else {
-        return -1;
-    }
-}
-
-class Zip {
-public:
-    void zipFiles(std::string zipPath, std::vector<std::string> files, std::vector<std::string> modNames) {
-        struct zip_t* zip = zip_open(fmt::format("{}.zip", zipPath).c_str(), ZIP_DEFAULT_COMPRESSION_LEVEL, 'w');
-        {
-            for (auto file : files) {
-                log::info("zipping file: {}", file);
-                zip_entry_open(zip, modNames.at(getIndex(files, file)).c_str());
-                zip_entry_fwrite(zip, file.c_str());
-                zip_entry_close(zip);
-            }
-        }
-        zip_close(zip);
-    }
-};
 
 EventListener<FileTask> m_fileTaskListener;
 EventListener<web::WebTask> m_webTaskListener;
@@ -180,19 +152,54 @@ void ExportProfilesList::exportProfileWithLocalMods(FileTask::Event* e) {
 }
 
 void ExportProfilesList::onExport(CCObject*) {
-    m_fileTaskListener.bind([=] (auto* e) {
-        if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
-            exportProfileWithLocalMods(e);
-        } else {
-            exportProfile(e);
-        }
-    });
-    m_fileTaskListener.setFilter(exportToFile());
+    ModpackInfoPopup::create()->show();
 }
 
 ExportProfilesList* ExportProfilesList::create(CCSize const& size) {
     auto ret = new ExportProfilesList();
     if (ret && ret->init(size)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+bool ModpackInfoPopup::setup() {
+    this->setTitle("Modpack Info");
+
+    m_modpackTitle = TextInput::create(150.f, "Title");
+
+    auto menu = CCMenu::create();
+    menu->setPosition(this->m_title->getPosition() - ccp(0, 115));
+    menu->addChild(m_modpackTitle);
+
+    auto createPackSpr = ButtonSprite::create("Create Pack", "bigFont.fnt", "geode-button.png"_spr);
+    createPackSpr->setScale(0.65f);
+    m_createPackBtn = CCMenuItemSpriteExtra::create(
+        createPackSpr, this, menu_selector(ModpackInfoPopup::onCreatePack)
+    );
+    m_createPackBtn->setID("create-pack-button");
+    menu->addChild(m_createPackBtn);
+
+    this->m_mainLayer->addChild(menu);
+}
+
+void ModpackInfoPopup::onCreatePack(CCObject* sender) {
+    auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("ExportProfilesList"));
+        m_fileTaskListener.bind([=] (auto* e) {
+        if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
+            exportProfilesList->exportProfileWithLocalMods(e);
+        } else {
+            exportProfilesList->exportProfile(e);
+        }
+    });
+    m_fileTaskListener.setFilter(exportToFile());
+}
+
+ModpackInfoPopup* ModpackInfoPopup::create() {
+    auto ret = new ModpackInfoPopup();
+    if (ret->init(POPUP_WIDTH, POPUP_HEIGHT, "GJ_square05.png")) {
         ret->autorelease();
         return ret;
     }

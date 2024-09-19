@@ -23,12 +23,26 @@ protected:
     void onPage(CCObject*);
     void onExport(CCObject*);
 
-    void exportProfile(FileTask::Event* e);
-    void exportProfileWithLocalMods(FileTask::Event* e);
-
 public:
     static ExportProfilesList* create(CCSize const& size);
-    size_t getPage() const;
-    void reloadPage();
-    void gotoPage(size_t page, bool update = false);
+    void exportProfile(FileTask::Event* e);
+    void exportProfileWithLocalMods(FileTask::Event* e);
+};
+
+class ModpackInfoPopup : public geode::Popup<> {
+    protected:
+        TextInput* m_modpackTitle;
+        TextInput* m_modpackAuthor;
+        TextInput* m_modpackDescription;
+        CCMenuItemSpriteExtra* m_createPackBtn;
+
+        void onCreatePack(CCObject* sender);
+
+        bool setup() override;
+
+    public:
+        static constexpr float POPUP_WIDTH = 300.f;
+        static constexpr float POPUP_HEIGHT = 300.f;
+
+        static ModpackInfoPopup* create();
 };
