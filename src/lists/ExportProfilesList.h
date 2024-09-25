@@ -28,21 +28,3 @@ public:
     void exportProfile(FileTask::Event* e);
     void exportProfileWithLocalMods(FileTask::Event* e);
 };
-
-class ModpackInfoPopup : public geode::Popup<> {
-    protected:
-        TextInput* m_modpackTitle;
-        TextInput* m_modpackAuthor;
-        TextInput* m_modpackDescription;
-        CCMenuItemSpriteExtra* m_createPackBtn;
-
-        void onCreatePack(CCObject* sender);
-
-        bool setup() override;
-
-    public:
-        static constexpr float POPUP_WIDTH = 300.f;
-        static constexpr float POPUP_HEIGHT = 300.f;
-
-        static ModpackInfoPopup* create();
-};

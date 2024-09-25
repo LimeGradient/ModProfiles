@@ -1,5 +1,6 @@
 #include "ExportProfilesList.h"
 #include "ModCell.h"
+#include "ModpackInfoPopup.h"
 #include "utils/ziputils.h"
 
 #include <Geode/Geode.hpp>
@@ -14,16 +15,6 @@ bool sort_by_name(const Mod* modA, const Mod* modB) {
 
 EventListener<FileTask> m_fileTaskListener;
 EventListener<web::WebTask> m_webTaskListener;
-
-file::FilePickOptions options = {
-    std::nullopt,
-    {
-        {
-            "Mod Profile",
-            {".modprofile"}
-        },
-    }
-};
 
 bool ExportProfilesList::init(CCSize const& size) {
     if (!CCNode::init()) return false;
@@ -40,6 +31,7 @@ bool ExportProfilesList::init(CCSize const& size) {
             ->setAutoGrowAxis(size.height)
             ->setGap(2.5f)
     );
+    m_list->scrollToTop();
     this->addChildAtPosition(m_list, Anchor::Bottom, ccp(-m_list->getScaledContentWidth() / 2, 0));
 
     m_topContainer = CCNode::create();
@@ -84,10 +76,6 @@ bool ExportProfilesList::init(CCSize const& size) {
     this->addChildAtPosition(m_btnMenu, Anchor::Bottom, ccp(0, -13.f));
 
     return true;
-}
-
-FileTask exportToFile() {
-    return file::pick(file::PickMode::SaveFile, options);
 }
 
 void ExportProfilesList::exportProfile(FileTask::Event* e) {
@@ -158,48 +146,6 @@ void ExportProfilesList::onExport(CCObject*) {
 ExportProfilesList* ExportProfilesList::create(CCSize const& size) {
     auto ret = new ExportProfilesList();
     if (ret && ret->init(size)) {
-        ret->autorelease();
-        return ret;
-    }
-    CC_SAFE_DELETE(ret);
-    return nullptr;
-}
-
-bool ModpackInfoPopup::setup() {
-    this->setTitle("Modpack Info");
-
-    m_modpackTitle = TextInput::create(150.f, "Title");
-
-    auto menu = CCMenu::create();
-    menu->setPosition(this->m_title->getPosition() - ccp(0, 115));
-    menu->addChild(m_modpackTitle);
-
-    auto createPackSpr = ButtonSprite::create("Create Pack", "bigFont.fnt", "geode-button.png"_spr);
-    createPackSpr->setScale(0.65f);
-    m_createPackBtn = CCMenuItemSpriteExtra::create(
-        createPackSpr, this, menu_selector(ModpackInfoPopup::onCreatePack)
-    );
-    m_createPackBtn->setID("create-pack-button");
-    menu->addChild(m_createPackBtn);
-
-    this->m_mainLayer->addChild(menu);
-}
-
-void ModpackInfoPopup::onCreatePack(CCObject* sender) {
-    auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("ExportProfilesList"));
-        m_fileTaskListener.bind([=] (auto* e) {
-        if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
-            exportProfilesList->exportProfileWithLocalMods(e);
-        } else {
-            exportProfilesList->exportProfile(e);
-        }
-    });
-    m_fileTaskListener.setFilter(exportToFile());
-}
-
-ModpackInfoPopup* ModpackInfoPopup::create() {
-    auto ret = new ModpackInfoPopup();
-    if (ret->init(POPUP_WIDTH, POPUP_HEIGHT, "GJ_square05.png")) {
         ret->autorelease();
         return ret;
     }
