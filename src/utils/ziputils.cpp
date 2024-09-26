@@ -38,3 +38,8 @@ void Zip::writeStringToZip(std::string filename, std::string content) {
 void Zip::close() {
     zip_close(this->m_zip);
 }
+
+void Zip::unzipIntoFolder(std::string filename, std::string dest) {
+    int arg = 2;
+    zip_extract(filename.c_str(), dest.c_str(), NULL, &arg);
+}

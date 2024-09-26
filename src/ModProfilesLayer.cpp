@@ -1,9 +1,3 @@
-/*
-A lot (if not all) of the UI code is straight from Geode github
-i wanted it to look as close as possible to the actual geode menu
-https://github.com/geode-sdk/geode
-*/
-
 #include <Geode/Geode.hpp>
 #include <Geode/utils/ColorProvider.hpp>
 
@@ -12,6 +6,7 @@ using namespace geode::prelude;
 #include "ModProfilesLayer.h"
 #include "SettingsPopup.h"
 #include "lists/ExportProfilesList.h"
+#include "lists/PackSelectList.h"
 #include "geode_impl/GeodeTabSprite.h"
 #include "geode_impl/SwelvyBG.h"
 
@@ -92,7 +87,7 @@ bool ModProfilesLayer::init() {
     }) {
         auto btn = CCMenuItemSpriteExtra::create(
             GeodeTabSprite::create(std::get<0>(item), std::get<1>(item), 120),
-            this, menu_selector(ModProfilesLayer::onClose)
+            this, menu_selector(ModProfilesLayer::onTab)
         );
         btn->setID(std::get<2>(item));
         mainTabs->addChild(btn);
@@ -125,9 +120,9 @@ bool ModProfilesLayer::init() {
     );
     this->addChildAtPosition(actionsMenu, Anchor::BottomLeft, ccp(35, 12), false);
 
-    auto list = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
-    list->setPosition(m_frame->getContentSize() / 2);
-    m_frame->addChild(list);
+    m_currentList = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
+    m_currentList->setPosition(m_frame->getContentSize() / 2);
+    m_frame->addChild(m_currentList);
 
     return true;
 }
@@ -152,6 +147,7 @@ void ModProfilesLayer::onSettings(CCObject*) {
 void ModProfilesLayer::onTab(CCObject* sender) {
     auto senderNode = static_cast<CCNode*>(sender);
     auto id = senderNode->getID();
+    log::info("sender id: {}", id);
 
     auto setSelectedTab = [=](std::string id) {
         for (auto tab : m_tabs) {
@@ -163,9 +159,15 @@ void ModProfilesLayer::onTab(CCObject* sender) {
     };
 
     // wow this is dumb but it is what it is
+    m_frame->removeChild(m_currentList);
     if (id == "export-button") {
-        auto list = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
+        m_currentList = ExportProfilesList::create(m_frame->getContentSize() - ccp(30, 0));
     }
+    if (id == "packs-button") {
+        m_currentList = PackSelectList::create(m_frame->getContentSize() - ccp(30, 0));
+    }
+    m_currentList->setPosition(m_frame->getContentSize() / 2);
+    m_frame->addChild(m_currentList);
 }
 
 ModProfilesLayer* ModProfilesLayer::create() {

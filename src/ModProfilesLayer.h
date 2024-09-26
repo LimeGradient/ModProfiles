@@ -9,6 +9,7 @@ protected:
     ScrollLayer* scrollLayer = nullptr;
     CCSprite* outline;
     CCNode* m_frame;
+    CCNode* m_currentList;
     
     void keyBackClicked() override;
     void switchList(CCNode* list);

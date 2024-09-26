@@ -21,7 +21,7 @@ bool ExportProfilesList::init(CCSize const& size) {
 
     this->setContentSize(size);
     this->setAnchorPoint({.5f, .5f});
-    this->setID("ExportProfilesList");
+    this->setID("export-pack-list");
 
     m_list = ScrollLayer::create(size);
     m_list->m_contentLayer->setLayout(
@@ -101,7 +101,7 @@ void ExportProfilesList::exportProfile(FileTask::Event* e, PackInfo* packInfo) {
                     for (auto mod : toggledMods) {
                         if (file.path().filename().string() == fmt::format("{}.geode", mod)) {
                             filePaths.push_back(file.path().string());
-                            modFilenames.push_back(fmt::format("{}.geode", mod));
+                            modFilenames.push_back(fmt::format("mods/{}.geode", mod));
                         }
                     }
                 }

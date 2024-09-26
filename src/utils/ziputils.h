@@ -17,5 +17,7 @@ public:
     void writeStringToZip(std::string filename, std::string content);
     void close();
 
+    void unzipIntoFolder(std::string filename, std::string dest);
+
     zip_t* m_zip;
 };

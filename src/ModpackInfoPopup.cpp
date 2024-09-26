@@ -99,7 +99,7 @@ void ModpackInfoPopup::onChooseLogo(CCObject*) {
 }
 
 void ModpackInfoPopup::onCreatePack(CCObject* sender) {
-    auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("ExportProfilesList"));
+    auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("export-pack-list"));
     m_fileTaskListener.bind([=] (auto* e) {
         m_packInfo->setPackInfo(
             m_modpackTitle->getString(), 
