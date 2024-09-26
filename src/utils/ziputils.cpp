@@ -11,15 +11,30 @@ int getIndex(std::vector<std::string> vec, std::string element) {
     }
 }
 
-void Zip::zipFiles(std::string zipPath, std::vector<std::string> files, std::vector<std::string> modNames) {
-    struct zip_t* zip = zip_open(fmt::format("{}.zip", zipPath).c_str(), 9, 'w');
-    {
-        for (auto file : files) {
-            log::info("zipping file: {}", file);
-            zip_entry_open(zip, modNames.at(getIndex(files, file)).c_str());
-            zip_entry_fwrite(zip, file.c_str());
-            zip_entry_close(zip);
-        }
+Zip::Zip(std::string zipPath) {
+    this->m_zip = zip_open(fmt::format("{}.geodepack", zipPath).c_str(), 9, 'w');
+}
+
+void Zip::zipFiles(std::vector<std::string> files, std::vector<std::string> modNames) {
+    for (auto file : files) {
+        zip_entry_open(this->m_zip, modNames.at(getIndex(files, file)).c_str());
+        zip_entry_fwrite(this->m_zip, file.c_str());
+        zip_entry_close(this->m_zip);
     }
-    zip_close(zip);
+}
+
+void Zip::appendToZip(std::string filename, std::string file) {
+    zip_entry_open(this->m_zip, filename.c_str());
+    zip_entry_fwrite(this->m_zip, file.c_str());
+    zip_entry_close(this->m_zip);
+}
+
+void Zip::writeStringToZip(std::string filename, std::string content) {
+    zip_entry_open(this->m_zip, filename.c_str());
+    zip_entry_write(this->m_zip, content.c_str(), strlen(content.c_str()));
+    zip_entry_close(this->m_zip);
+}
+
+void Zip::close() {
+    zip_close(this->m_zip);
 }

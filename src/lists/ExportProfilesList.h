@@ -2,6 +2,7 @@
 
 #include <Geode/Geode.hpp>
 #include <filesystem>
+#include "utils/PackInfo.h"
 using namespace geode::prelude;
 namespace fs = std::filesystem;
 using FileTask = Task<Result<fs::path>>;
@@ -25,6 +26,5 @@ protected:
 
 public:
     static ExportProfilesList* create(CCSize const& size);
-    void exportProfile(FileTask::Event* e);
-    void exportProfileWithLocalMods(FileTask::Event* e);
+    void exportProfile(FileTask::Event* e, PackInfo* packInfo);
 };

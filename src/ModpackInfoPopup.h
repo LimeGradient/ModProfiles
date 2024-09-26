@@ -2,6 +2,9 @@
 
 #include <Geode/Geode.hpp>
 #include <filesystem>
+
+#include "utils/PackInfo.h"
+
 using namespace geode::prelude;
 namespace fs = std::filesystem;
 #ifndef FileTask
@@ -17,6 +20,8 @@ class ModpackInfoPopup : public geode::Popup<> {
         TextInput* m_modpackDescription;
         CCMenuItemSpriteExtra* m_chooseLogoBtn;
         CCMenuItemSpriteExtra* m_createPackBtn;
+
+        PackInfo* m_packInfo;
 
         void getLogo(FileTask::Event* e);
 

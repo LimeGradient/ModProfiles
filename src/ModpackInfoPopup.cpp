@@ -1,12 +1,14 @@
 #include "ModpackInfoPopup.h"
 #include "lists/ExportProfilesList.h"
 
+EventListener<FileTask> logoListener;
+
 file::FilePickOptions options = {
     std::nullopt,
     {
         {
             "Mod Profile",
-            {".modprofile"}
+            {".geodepack"}
         },
     }
 };
@@ -21,7 +23,7 @@ FileTask importLogo() {
         {
             {
                 "Pictures",
-                {".jpg", ".png"}
+                {"*.jpg", "*.png"}
             },
         }
     });
@@ -30,6 +32,8 @@ FileTask importLogo() {
 bool ModpackInfoPopup::setup() {
     this->setTitle("Modpack Info");
     this->setID("modpack-info-popup");
+
+    m_packInfo = new PackInfo();
 
     auto menu = CCMenu::create();
     menu->setID("modpack-info-menu");
@@ -49,6 +53,14 @@ bool ModpackInfoPopup::setup() {
     m_modpackAuthor->setID("modpack-author-input");
     menu->addChildAtPosition(m_modpackAuthor, Anchor::Center, ccp(0.f, -20.f));
 
+    auto selectLogoBtnSpr = ButtonSprite::create("Choose Logo", "bigFont.fnt", "geode-button.png"_spr);
+    selectLogoBtnSpr->setScale(0.65f);
+    m_chooseLogoBtn = CCMenuItemSpriteExtra::create(
+        selectLogoBtnSpr, this, menu_selector(ModpackInfoPopup::onChooseLogo)
+    );
+    m_chooseLogoBtn->setID("choose-logo-button");
+    menu->addChildAtPosition(m_chooseLogoBtn, Anchor::Center, ccp(0.f, -60.f));
+
     auto createPackSpr = ButtonSprite::create("Create Pack", "bigFont.fnt", "geode-button.png"_spr);
     createPackSpr->setScale(0.65f);
     m_createPackBtn = CCMenuItemSpriteExtra::create(
@@ -58,12 +70,15 @@ bool ModpackInfoPopup::setup() {
     menu->addChildAtPosition(m_createPackBtn, Anchor::Bottom, ccp(0.f, 15.f));
 
     this->m_mainLayer->addChild(menu);
+
+    return true;
 }
 
 void ModpackInfoPopup::getLogo(FileTask::Event* e) {
     if (auto result = e->getValue()) {
         if (result->isOk()) {
             auto path = result->unwrap();
+            m_packInfo->logo = path;
         }
     } else if (e->isCancelled()) {
         geode::Notification::create("File Operation Cancelled", geode::NotificationIcon::Error)->show();
@@ -71,7 +86,6 @@ void ModpackInfoPopup::getLogo(FileTask::Event* e) {
 }
 
 void ModpackInfoPopup::onChooseLogo(CCObject*) {
-    EventListener<FileTask> logoListener;
     logoListener.bind([=] (auto* e) {
         this->getLogo(e);
     });
@@ -80,12 +94,14 @@ void ModpackInfoPopup::onChooseLogo(CCObject*) {
 
 void ModpackInfoPopup::onCreatePack(CCObject* sender) {
     auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("ExportProfilesList"));
-        m_fileTaskListener.bind([=] (auto* e) {
-        if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
-            exportProfilesList->exportProfileWithLocalMods(e);
-        } else {
-            exportProfilesList->exportProfile(e);
-        }
+    m_fileTaskListener.bind([=] (auto* e) {
+        m_packInfo->setPackInfo(
+            m_modpackTitle->getString(), 
+            m_modpackDescription->getString(), 
+            m_modpackAuthor->getString(), 
+            Mod::get()->getSavedValue<bool>("include-local-mods")
+        );
+        exportProfilesList->exportProfile(e, m_packInfo);
     });
     m_fileTaskListener.setFilter(exportToFile());
 }

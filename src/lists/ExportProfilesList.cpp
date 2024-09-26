@@ -78,60 +78,62 @@ bool ExportProfilesList::init(CCSize const& size) {
     return true;
 }
 
-void ExportProfilesList::exportProfile(FileTask::Event* e) {
+void ExportProfilesList::exportProfile(FileTask::Event* e, PackInfo* packInfo) {
     std::vector<std::string> modLinks;
 
     if (auto result = e->getValue()) {
         if (result->isOk()) {
             auto path = result->unwrap();
+            Zip* zip = new Zip(path.string());
 
-            CCObject* obj;
-            CCARRAY_FOREACH(m_list->m_contentLayer->getChildren(), obj) {
-                auto* node = static_cast<CCNode*>(obj);
-                CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(node->getChildByID("view-menu")->getChildByID("enable-toggler"));
-                log::info("mod: {} - is toggled: {}", node->getID(), toggler->isToggled());
-                if (toggler->isToggled()) {
-                    modLinks.push_back(fmt::format("https://api.geode-sdk.org/v1/mods/{}", node->getID()));
-                }
-            }
+            if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
+                std::vector<std::string> toggledMods;
+                std::vector<std::string> filePaths;
+                std::vector<std::string> modFilenames;
 
-            std::ofstream out;
-            out.open(fmt::format("{}_profile.modprofile", path), std::ios::trunc);
-            for (std::string link : modLinks) {
-                out << link << "\n";
-            }
-            out.close();
-            geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
-        }
-    } else if (e->isCancelled()) {
-        geode::Notification::create("File Operation Cancelled", geode::NotificationIcon::Error)->show();
-    }
-}
-
-void ExportProfilesList::exportProfileWithLocalMods(FileTask::Event* e) {
-    std::vector<std::string> toggledMods;
-    std::vector<std::string> filePaths;
-    std::vector<std::string> modFilenames;
-    Zip* zip = new Zip();
-
-    if (auto result = e->getValue()) {
-        if (result->isOk()) {
-            auto path = result->unwrap();
-            for (auto obj : CCArrayExt<CCNode*>(m_list->m_contentLayer->getChildren())) {
-                CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(obj->getChildByIDRecursive("enable-toggler"));
-                if (toggler->isToggled()) {
-                    toggledMods.push_back(obj->getID());
-                }
-            }
-            for (auto file : fs::directory_iterator(dirs::getModsDir())) {
-                for (auto mod : toggledMods) {
-                    if (file.path().filename().string() == fmt::format("{}.geode", mod)) {
-                        filePaths.push_back(file.path().string());
-                        modFilenames.push_back(fmt::format("{}.geode", mod));
+                for (auto obj : CCArrayExt<CCNode*>(m_list->m_contentLayer->getChildren())) {
+                    CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(obj->getChildByIDRecursive("enable-toggler"));
+                    if (toggler->isToggled()) {
+                        toggledMods.push_back(obj->getID());
                     }
                 }
+                for (auto file : fs::directory_iterator(dirs::getModsDir())) {
+                    for (auto mod : toggledMods) {
+                        if (file.path().filename().string() == fmt::format("{}.geode", mod)) {
+                            filePaths.push_back(file.path().string());
+                            modFilenames.push_back(fmt::format("{}.geode", mod));
+                        }
+                    }
+                }
+                zip->zipFiles(filePaths, modFilenames);
+            } else {
+                for (auto obj : CCArrayExt<CCNode*>(m_list->m_contentLayer->getChildren())) {
+                    CCMenuItemToggler* toggler = static_cast<CCMenuItemToggler*>(obj->getChildByID("view-menu")->getChildByID("enable-toggler"));
+                    log::info("mod: {} - is toggled: {}", obj->getID(), toggler->isToggled());
+                    if (toggler->isToggled()) {
+                        modLinks.push_back(fmt::format("https://api.geode-sdk.org/v1/mods/{}", obj->getID()));
+                    }
+                }
+
+                std::ofstream out;
+                out.open(fmt::format("{}/mods.modslist", geode::dirs::getTempDir()), std::ios::trunc);
+                for (std::string link : modLinks) {
+                    out << link << "\n";
+                }
+                out.close();
+
+                zip->appendToZip("mods.modlist", fmt::format("{}/mods.modslist", geode::dirs::getTempDir()));
             }
-            zip->zipFiles(path.string(), filePaths, modFilenames);
+
+            matjson::Value packJson;
+            packJson["title"] = (packInfo->title.empty()) ? "GeodePack" : packInfo->title;
+            packJson["description"] = (packInfo->description.empty()) ? "I am a default description" : packInfo->description;
+            packJson["author"] = (packInfo->author.empty()) ? "A wonderful user" : packInfo->author;
+            packJson["hasLocalMods"] = packInfo->includesLocalMods;
+
+            zip->writeStringToZip("pack.json", packJson.dump());
+            zip->close();
+
             geode::Notification::create("Success! Created Profile!", geode::NotificationIcon::Success)->show();
         }
     } else if (e->isCancelled()) {

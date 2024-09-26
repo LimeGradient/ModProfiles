@@ -10,5 +10,12 @@ using namespace geode::prelude;
 
 class Zip {
 public:
-    void zipFiles(std::string zipPath, std::vector<std::string> files, std::vector<std::string> modNames);
+    Zip(std::string zipPath);
+
+    void zipFiles(std::vector<std::string> files, std::vector<std::string> modNames);
+    void appendToZip(std::string filename, std::string file);
+    void writeStringToZip(std::string filename, std::string content);
+    void close();
+
+    zip_t* m_zip;
 };
