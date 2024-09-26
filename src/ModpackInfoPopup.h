@@ -19,6 +19,7 @@ class ModpackInfoPopup : public geode::Popup<> {
         TextInput* m_modpackAuthor;
         TextInput* m_modpackDescription;
         CCMenuItemSpriteExtra* m_chooseLogoBtn;
+        CCLabelBMFont* m_logoPathText;
         CCMenuItemSpriteExtra* m_createPackBtn;
 
         PackInfo* m_packInfo;

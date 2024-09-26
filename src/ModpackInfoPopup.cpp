@@ -61,6 +61,11 @@ bool ModpackInfoPopup::setup() {
     m_chooseLogoBtn->setID("choose-logo-button");
     menu->addChildAtPosition(m_chooseLogoBtn, Anchor::Center, ccp(0.f, -60.f));
 
+    m_logoPathText = CCLabelBMFont::create("Logo Path:", "bigFont.fnt");
+    m_logoPathText->setScale(0.25f);
+    m_logoPathText->setID("logo-path-text");
+    menu->addChildAtPosition(m_logoPathText, Anchor::Center, ccp(0.f, -100.f));
+
     auto createPackSpr = ButtonSprite::create("Create Pack", "bigFont.fnt", "geode-button.png"_spr);
     createPackSpr->setScale(0.65f);
     m_createPackBtn = CCMenuItemSpriteExtra::create(
@@ -78,7 +83,8 @@ void ModpackInfoPopup::getLogo(FileTask::Event* e) {
     if (auto result = e->getValue()) {
         if (result->isOk()) {
             auto path = result->unwrap();
-            m_packInfo->logo = path;
+            m_packInfo->logo = path.string();
+            m_logoPathText->setString(fmt::format("Logo Path: {}", path.string()).c_str());
         }
     } else if (e->isCancelled()) {
         geode::Notification::create("File Operation Cancelled", geode::NotificationIcon::Error)->show();
@@ -104,6 +110,7 @@ void ModpackInfoPopup::onCreatePack(CCObject* sender) {
         exportProfilesList->exportProfile(e, m_packInfo);
     });
     m_fileTaskListener.setFilter(exportToFile());
+    this->onClose(new CCObject());
 }
 
 ModpackInfoPopup* ModpackInfoPopup::create() {

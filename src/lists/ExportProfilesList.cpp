@@ -131,6 +131,10 @@ void ExportProfilesList::exportProfile(FileTask::Event* e, PackInfo* packInfo) {
             packJson["author"] = (packInfo->author.empty()) ? "A wonderful user" : packInfo->author;
             packJson["hasLocalMods"] = packInfo->includesLocalMods;
 
+            if (!packInfo->logo.empty()) {
+                zip->appendToZip("logo.png", packInfo->logo);
+            }
+
             zip->writeStringToZip("pack.json", packJson.dump());
             zip->close();
 
