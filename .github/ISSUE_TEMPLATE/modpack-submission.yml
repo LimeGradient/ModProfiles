@@ -1,6 +1,9 @@
 name: New Modpack Submission
 description: Submit a Modpack to the Index!
 title: "[Modpack]: "
+labels: [
+  "Modpack Submission"
+]
 body:
   - type: markdown
     attributes:
