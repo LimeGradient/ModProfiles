@@ -80,11 +80,11 @@ bool ExportProfilesList::init(CCSize const& size) {
 
 void ExportProfilesList::exportProfile(FileTask::Event* e, PackInfo* packInfo) {
     std::vector<std::string> modLinks;
-
     if (auto result = e->getValue()) {
         if (result->isOk()) {
             auto path = result->unwrap();
             Zip* zip = new Zip(path.string());
+            log::info("creating profile at {}", path);
 
             if (Mod::get()->getSavedValue<bool>("include-local-mods")) {
                 std::vector<std::string> toggledMods;

@@ -2,6 +2,7 @@
 #include "lists/ExportProfilesList.h"
 
 EventListener<FileTask> logoListener;
+EventListener<FileTask> m_createPackListener;
 
 file::FilePickOptions options = {
     std::nullopt,
@@ -100,7 +101,7 @@ void ModpackInfoPopup::onChooseLogo(CCObject*) {
 
 void ModpackInfoPopup::onCreatePack(CCObject* sender) {
     auto exportProfilesList = static_cast<ExportProfilesList*>(CCScene::get()->getChildByIDRecursive("export-pack-list"));
-    m_fileTaskListener.bind([=] (auto* e) {
+    m_createPackListener.bind([=] (auto* e) {
         m_packInfo->setPackInfo(
             m_modpackTitle->getString(), 
             m_modpackDescription->getString(), 
@@ -109,7 +110,7 @@ void ModpackInfoPopup::onCreatePack(CCObject* sender) {
         );
         exportProfilesList->exportProfile(e, m_packInfo);
     });
-    m_fileTaskListener.setFilter(exportToFile());
+    m_createPackListener.setFilter(exportToFile());
     this->onClose(new CCObject());
 }
 
