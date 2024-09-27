@@ -14,5 +14,5 @@ body:
     attributes:
       label: Modpack Download Link
       description: The download link to your modpack
-      validations:
-        required: true
+    validations:
+      required: true
