@@ -4,6 +4,7 @@ using namespace geode::prelude;
 #include <filesystem>
 #include "utils/PackInfo.h"
 #include "utils/ziputils.h"
+#include "PackCell.h"
 using namespace geode::prelude;
 namespace fs = std::filesystem;
 using FileTask = Task<Result<fs::path>>;

@@ -3,8 +3,12 @@
     - Allows the user to have many packs and be able to switch between them.
 - Added Pack Index Menu
     - Download packs from the pack index
+    - To submit packs to the index, [Join the Discord](https://discord.gg/44ANAhXz7r)
 - Reworked UI to look more like Geode's UI
 - Added support for exporting local mods
+- Added new pack schema
+- Fixed icons
+- Fixed empty file names when exporting
 
 # v1.1.1
 - Ported to GD 2.206

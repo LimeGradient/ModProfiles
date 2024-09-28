@@ -111,7 +111,6 @@ void ModpackInfoPopup::onCreatePack(CCObject* sender) {
         exportProfilesList->exportProfile(e, m_packInfo);
     });
     m_createPackListener.setFilter(exportToFile());
-    this->onClose(new CCObject());
 }
 
 ModpackInfoPopup* ModpackInfoPopup::create() {
