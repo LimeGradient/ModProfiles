@@ -37,6 +37,7 @@ bool GeodeTabSprite::init(const char* iconFrame, const char* text, float width, 
             "mod-list-tab-selected-bg-alt"_spr :
             "mod-list-tab-selected-bg"_spr
     )));
+    m_selectedBG->setVisible(false);
     this->addChildAtPosition(m_selectedBG, Anchor::Center);
 
     m_icon = CCSprite::createWithSpriteFrameName(iconFrame);

@@ -124,6 +124,9 @@ bool ModProfilesLayer::init() {
     m_currentList->setPosition(m_frame->getContentSize() / 2);
     m_frame->addChild(m_currentList);
 
+    auto sprite = static_cast<GeodeTabSprite*>(m_tabs[0]->getChildren()->objectAtIndex(0));
+    sprite->select(true);
+
     return true;
 }
 
@@ -147,16 +150,13 @@ void ModProfilesLayer::onSettings(CCObject*) {
 void ModProfilesLayer::onTab(CCObject* sender) {
     auto senderNode = static_cast<CCNode*>(sender);
     auto id = senderNode->getID();
-    log::info("sender id: {}", id);
-
-    auto setSelectedTab = [=](std::string id) {
-        for (auto tab : m_tabs) {
-            bool selected;
-            if (id == tab->getID()) {
-                
-            }
-        }
-    };
+    
+    for (auto tab : m_tabs) {
+        auto sprite = static_cast<GeodeTabSprite*>(tab->getChildren()->objectAtIndex(0));
+        sprite->select(false);
+    }
+    auto sprite = static_cast<GeodeTabSprite*>(senderNode->getChildren()->objectAtIndex(0));
+    sprite->select(true);
 
     // wow this is dumb but it is what it is
     m_frame->removeChild(m_currentList);
