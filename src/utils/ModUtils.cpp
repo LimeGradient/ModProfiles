@@ -10,7 +10,7 @@ bool ModUtils::isModCompatible(std::string modPath) {
     #elif defined(__APPLE__)
         it = std::find(filenames.begin(), filenames.end(), ".dylib");
     #elif defined(__ANDROID__)
-        it = std::find(filenames.begin(), filenames.end(). ".so");
+        it = std::find(filenames.begin(), filenames.end(), ".so");
     #endif
 
     if (it != filenames.end()) {
