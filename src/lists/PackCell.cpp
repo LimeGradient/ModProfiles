@@ -26,12 +26,14 @@ bool PackCell::init(PackInfo* packInfo) {
         m_logo = CCSprite::createWithTexture(texture);
         image->release();
         texture->release();
+        
+        m_logo->setScale(0.135f);
     } else {
         m_logo = CCSprite::createWithSpriteFrameName("discord-icon.png"_spr);
+        m_logo->setScale(0.75f);
     }
 
     m_logo->setID("logo-sprite");
-    m_logo->setScale(0.135f);
     m_logo->setAnchorPoint({.5f, .5f});
     m_logo->setPosition({15.f, 14.f});
     this->addChild(m_logo);
@@ -108,7 +110,11 @@ bool PackCell::init(PackInfo* packInfo) {
 
 void PackCell::onEnable(CCObject*) {
     auto packSelectLayer = static_cast<PackSelectList*>(CCScene::get()->getChildByIDRecursive("pack-select-list"));
-    packSelectLayer->packSelect(this->m_packInfo);
+    if (!this->m_enableToggle->isToggled()) {
+        packSelectLayer->packSelect(this->m_packInfo);
+    } else {
+        packSelectLayer->packDeselect();
+    }
 }
 
 PackCell* PackCell::create(PackInfo* packInfo) {

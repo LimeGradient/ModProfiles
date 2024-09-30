@@ -115,7 +115,7 @@ void PackSelectList::packSelect(PackInfo* packInfo) {
             if (packJson["hasLocalMods"].as_bool() == true) {
                 FLAlertLayer::create(
                     "Mod Profiles",
-                    "<cr>Warning!</c> this pack might contain mods in development! Beware!",
+                    "<cr>Warning!</c> This pack may contain mods in development! Beware!",
                     "Ok"
                 )->show();
             }
@@ -125,6 +125,11 @@ void PackSelectList::packSelect(PackInfo* packInfo) {
 
     m_importPackBtn->setVisible(false);
     m_restartBtn->setVisible(true);
+}
+
+void PackSelectList::packDeselect() {
+    m_importPackBtn->setVisible(true);
+    m_restartBtn->setVisible(false);
 }
 
 void PackSelectList::onImportPack(CCObject*) {

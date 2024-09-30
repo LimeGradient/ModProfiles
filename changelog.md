@@ -9,6 +9,7 @@
 - Added new pack schema
 - Fixed icons
 - Fixed empty file names when exporting
+- Fixed mods importing without the proper binary
 
 # v1.1.1
 - Ported to GD 2.206

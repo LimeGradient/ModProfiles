@@ -34,4 +34,5 @@ public:
     static PackSelectList* create(CCSize const& size);
 
     void packSelect(PackInfo* packInfo);
+    void packDeselect();
 };
