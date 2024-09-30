@@ -2,6 +2,20 @@
 
 using namespace geode::prelude;
 
+EventListener<FileTask> m_importPackListener;
+
+FileTask importPack() {
+    return file::pick(file::PickMode::OpenFile, {
+        std::nullopt,
+        {
+            {
+                "Mod Profile",
+                {".geodepack"}
+            },
+        }
+    });
+}
+
 bool PackSelectList::init(CCSize const& size) {
     if (!CCNode::init()) return false;
 
@@ -59,9 +73,9 @@ bool PackSelectList::init(CCSize const& size) {
 void PackSelectList::getAllPacks() {
     float totalHeight = .0f;
     Zip* zip = new Zip("");
-    if (!fs::exists(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()))) {
-        fs::create_directory(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()));
-    }
+
+    m_list->m_contentLayer->removeAllChildren();
+
     for (auto file : fs::directory_iterator(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()))) {
         if (file.is_directory() || file.path().extension().string() != ".geodepack") continue;
 
@@ -133,7 +147,22 @@ void PackSelectList::packDeselect() {
 }
 
 void PackSelectList::onImportPack(CCObject*) {
+    m_importPackListener.bind([=] (FileTask::Event* e) {
+        if (auto result = e->getValue()) {
+            if (result->isOk()) {
+                Zip* zip = new Zip("");
+                auto path = result->unwrap();
 
+                auto packsDir = fmt::format("{}/geodepacks", geode::dirs::getGeodeDir());
+                fs::copy(path.string(), packsDir);
+
+                auto unzippedDir = fmt::format("{}/geodepacks/{}", geode::dirs::getGeodeDir(), path.stem().string());
+        	    zip->unzipIntoFolder(path.string(), unzippedDir);
+                this->getAllPacks();
+            }
+        }
+    });
+    m_importPackListener.setFilter(importPack());
 }
 
 void PackSelectList::onRestartGame(CCObject*) {
@@ -152,7 +181,7 @@ void PackSelectList::onRestartGame(CCObject*) {
                 }
                 
                 for (auto file : fs::directory_iterator(modsDir)) {
-                    if (ModUtils::isModCompatible(file.path())) {
+                    if (ModUtils::isModCompatible(file.path().string())) {
                         fs::copy(file.path(), geode::dirs::getModsDir());
                     } else {
                         log::info("Mod not compatible: {}", file.path().stem().string());
