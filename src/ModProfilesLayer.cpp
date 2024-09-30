@@ -76,12 +76,11 @@ bool ModProfilesLayer::init() {
     mainTabs->setContentWidth(tabsTop->getContentWidth() - 45);
     mainTabs->setAnchorPoint({ .5f, .0f });
     mainTabs->setPosition(m_frame->convertToWorldSpace(tabsTop->getPosition() + ccp(0, 8)));
-    // Increment touch priority so the mods in the list don't override
     mainTabs->setTouchPriority(-150);
+    mainTabs->setScale(0.9f);
 
     for (auto item : std::initializer_list<std::tuple<const char*, const char*, const char*>> {
         { "GJ_shareBtn_001.png", "Export", "export-button" },
-        { "GJ_downloadBtn_001.png", "Import", "import-button" },
         { "GJ_duplicateBtn_001.png", "Packs", "packs-button" },
         { "GJ_statsBtn_001.png", "Pack Index", "pack-index-button" }
     }) {
