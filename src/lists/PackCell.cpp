@@ -102,6 +102,8 @@ bool PackCell::init(PackInfo* packInfo) {
     this->addChild(m_infoContainer);
     this->setContentSize(CCSize{m_bg->getScaledContentWidth(), m_bg->getScaledContentHeight()});
     m_infoContainer->setContentSize(this->getScaledContentSize());
+
+    return true;
 }
 
 void PackCell::onEnable(CCObject*) {

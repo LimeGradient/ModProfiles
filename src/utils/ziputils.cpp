@@ -62,3 +62,19 @@ std::string Zip::unzipFileIntoString(std::string archiveName, std::string filena
     free(buf);
     return str;
 }
+
+std::vector<std::string> Zip::getAllFileNames(std::string archiveName) {
+    struct zip_t* zip = zip_open(archiveName.c_str(), 0, 'r');
+    int i, n = zip_entries_total(zip);
+    std::vector<std::string> filenames;
+    for (i = 0; i < n; i++) {
+        zip_entry_openbyindex(zip, i);
+        {
+            filenames.push_back(std::string(zip_entry_name(zip)));
+        }
+        zip_entry_close(zip);
+    }
+    zip_close(zip);
+
+    return filenames;
+}

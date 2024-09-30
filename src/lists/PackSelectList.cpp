@@ -147,7 +147,11 @@ void PackSelectList::onRestartGame(CCObject*) {
                 }
                 
                 for (auto file : fs::directory_iterator(modsDir)) {
-                    fs::copy(file.path(), geode::dirs::getModsDir());
+                    if (ModUtils::isModCompatible(file.path())) {
+                        fs::copy(file.path(), geode::dirs::getModsDir());
+                    } else {
+                        log::info("Mod not compatible: {}", file.path().stem().string());
+                    }
                 }
             }
             geode::utils::game::restart();

@@ -19,6 +19,7 @@ public:
 
     void unzipIntoFolder(std::string filename, std::string dest);
     std::string unzipFileIntoString(std::string archiveName, std::string filename);
+    std::vector<std::string> getAllFileNames(std::string archiveName);
 
     zip_t* m_zip;
 };
