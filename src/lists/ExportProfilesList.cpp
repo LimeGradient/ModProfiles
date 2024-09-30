@@ -1,11 +1,4 @@
 #include "ExportProfilesList.h"
-#include "ModCell.h"
-#include "ModpackInfoPopup.h"
-#include "utils/ziputils.h"
-
-#include <Geode/Geode.hpp>
-#include <Geode/Loader.hpp>
-#include <Geode/Utils/web.hpp>
 
 using namespace geode::prelude;
 

@@ -1,8 +1,15 @@
 #pragma once
 
-#include <Geode/Geode.hpp>
 #include <filesystem>
+
+#include <Geode/Geode.hpp>
+#include <Geode/Loader.hpp>
+#include <Geode/utils/web.hpp>
+
 #include "utils/PackInfo.h"
+#include "ModCell.h"
+#include "ModpackInfoPopup.h"
+#include "utils/ziputils.h"
 using namespace geode::prelude;
 namespace fs = std::filesystem;
 using FileTask = Task<Result<fs::path>>;
