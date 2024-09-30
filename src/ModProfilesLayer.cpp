@@ -165,6 +165,9 @@ void ModProfilesLayer::onTab(CCObject* sender) {
     if (id == "packs-button") {
         m_currentList = PackSelectList::create(m_frame->getContentSize() - ccp(30, 0));
     }
+    if (id == "pack-index-button") {
+        return;
+    }
     m_currentList->setPosition(m_frame->getContentSize() / 2);
     m_frame->addChild(m_currentList);
 }
