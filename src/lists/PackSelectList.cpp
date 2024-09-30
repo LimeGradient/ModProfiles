@@ -18,6 +18,7 @@ bool PackSelectList::init(CCSize const& size) {
             ->setGap(2.5f)
     );
     m_list->scrollToTop();
+    m_list->m_scrollLimitTop = 5.f;
     this->addChildAtPosition(m_list, Anchor::Bottom, ccp(-m_list->getScaledContentWidth() / 2, 0));
 
     m_topContainer = CCNode::create();
@@ -29,14 +30,24 @@ bool PackSelectList::init(CCSize const& size) {
     m_btnMenu = CCMenu::create();
     m_btnMenu->setID("button-menu");
 
-    auto importPackBtnSpr = ButtonSprite::create("Import Pack", "bigFont.fnt", "geode-button.png"_spr);
-    importPackBtnSpr->setScale(0.65f);
+    m_importPackBtnSpr = ButtonSprite::create("Import Pack", "bigFont.fnt", "geode-button.png"_spr);
+    m_importPackBtnSpr->setScale(0.65f);
     m_importPackBtn = CCMenuItemSpriteExtra::create(
-        importPackBtnSpr, this, menu_selector(PackSelectList::onImportPack)
+        m_importPackBtnSpr, this, menu_selector(PackSelectList::onImportPack)
     );
     m_btnMenu->addChild(m_importPackBtn);
     m_btnMenu->setLayout(RowLayout::create());
     m_btnMenu->getLayout()->ignoreInvisibleChildren(true);
+
+    auto restartBtnSpr = ButtonSprite::create("Restart Game", "bigFont.fnt", "geode-button.png"_spr);
+    restartBtnSpr->setScale(0.65f);
+    m_restartBtn = CCMenuItemSpriteExtra::create(
+        restartBtnSpr, this, menu_selector(PackSelectList::onRestartGame)
+    );
+    m_restartBtn->setVisible(false);
+    m_restartBtn->setPosition(m_importPackBtn->getPosition());
+    m_btnMenu->addChild(m_restartBtn);
+    m_btnMenu->updateLayout();
     
     this->addChildAtPosition(m_btnMenu, Anchor::Bottom, ccp(0, -13.f));
 
@@ -52,13 +63,10 @@ void PackSelectList::getAllPacks() {
         fs::create_directory(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()));
     }
     for (auto file : fs::directory_iterator(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()))) {
-        if (file.is_directory()) continue;
-        log::info("unzipping pack");
+        if (file.is_directory() || file.path().extension().string() != ".geodepack") continue;
 
-        PackInfo* packInfo;
+        PackInfo* packInfo = new PackInfo();
         auto unzippedDir = fmt::format("{}/geodepacks/{}", geode::dirs::getGeodeDir(), file.path().stem().string());
-
-        zip->unzipIntoFolder(file.path().string(), unzippedDir);
 
         std::ifstream packJsonFile(fmt::format("{}/pack.json", unzippedDir));
         std::stringstream buffer;
@@ -71,9 +79,14 @@ void PackSelectList::getAllPacks() {
             packJson["author"].as_string(),
             packJson["hasLocalMods"].as_bool()
         );
-        packInfo->logo = fmt::format("{}/logo.png", unzippedDir);
+        if (fs::exists(fmt::format("{}/logo.png", unzippedDir).c_str())) {
+            packInfo->logo = fmt::format("{}/logo.png", unzippedDir);
+        } else {
+            packInfo->logo = "";
+        }
 
         auto packCell = PackCell::create(packInfo);
+        packCell->setID(file.path().stem().string());
         packCell->setContentWidth(this->getScaledContentWidth());
         packCell->m_bg->setContentWidth(this->getScaledContentWidth() + 150.f);
         packCell->m_infoContainer->setPositionX(packCell->m_bg->getScaledContentWidth() / 2);
@@ -87,8 +100,59 @@ void PackSelectList::getAllPacks() {
     }
 }
 
+void PackSelectList::packSelect(PackInfo* packInfo) {
+    for (auto file : fs::directory_iterator(fmt::format("{}/geodepacks", geode::dirs::getGeodeDir()))) {
+        if (!file.is_directory()) continue;
+
+        auto unzippedDir = fmt::format("{}/geodepacks/{}", geode::dirs::getGeodeDir(), file.path().stem().string());
+        std::ifstream packJsonFile(fmt::format("{}/pack.json", unzippedDir));
+        std::stringstream buffer;
+        buffer << packJsonFile.rdbuf();
+        auto packJsonStr = buffer.str();
+
+        auto packJson = matjson::parse(packJsonStr);
+        if (packJson["title"].as_string() == packInfo->title) {
+            if (packJson["hasLocalMods"].as_bool() == true) {
+                FLAlertLayer::create(
+                    "Mod Profiles",
+                    "<cr>Warning!</c> this pack might contain mods in development! Beware!",
+                    "Ok"
+                )->show();
+            }
+            this->m_selectedPackPath = unzippedDir;
+        }
+    }
+
+    m_importPackBtn->setVisible(false);
+    m_restartBtn->setVisible(true);
+}
+
 void PackSelectList::onImportPack(CCObject*) {
 
+}
+
+void PackSelectList::onRestartGame(CCObject*) {
+    createQuickPopup("Restart", "Are you sure you want to restart?", "Cancel", "Ok", [=, this](auto, bool btn2) {
+        if (btn2) {
+            std::ifstream packJsonFile(fmt::format("{}/pack.json", this->m_selectedPackPath));
+            std::stringstream buffer;
+            buffer << packJsonFile.rdbuf();
+            auto packJsonStr = buffer.str();
+
+            auto packJson = matjson::parse(packJsonStr);
+            if (packJson["hasLocalMods"].as_bool()) {
+                auto modsDir = fmt::format("{}/mods", this->m_selectedPackPath);
+                for (auto file : fs::directory_iterator(geode::dirs::getModsDir())) {
+                    fs::remove_all(file.path());
+                }
+                
+                for (auto file : fs::directory_iterator(modsDir)) {
+                    fs::copy(file.path(), geode::dirs::getModsDir());
+                }
+            }
+            geode::utils::game::restart();
+        }
+    });
 }
 
 PackSelectList* PackSelectList::create(CCSize const& size) {

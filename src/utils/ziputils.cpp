@@ -43,3 +43,22 @@ void Zip::unzipIntoFolder(std::string filename, std::string dest) {
     int arg = 2;
     zip_extract(filename.c_str(), dest.c_str(), NULL, &arg);
 }
+
+std::string Zip::unzipFileIntoString(std::string archiveName, std::string filename) {
+    void* buf = NULL;
+    size_t bufsize;
+
+    struct zip_t* zip = zip_open(archiveName.c_str(), 0, 'r'); 
+    {
+        zip_entry_open(zip, filename.c_str());
+        {
+            zip_entry_read(zip, &buf, &bufsize);
+        }
+        zip_entry_close(zip);
+    }
+    zip_close(zip);
+
+    auto str = std::string((char*)buf);
+    free(buf);
+    return str;
+}

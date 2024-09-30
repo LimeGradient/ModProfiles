@@ -18,6 +18,7 @@ public:
     void close();
 
     void unzipIntoFolder(std::string filename, std::string dest);
+    std::string unzipFileIntoString(std::string archiveName, std::string filename);
 
     zip_t* m_zip;
 };

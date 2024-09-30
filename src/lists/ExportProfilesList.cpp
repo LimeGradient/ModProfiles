@@ -32,6 +32,7 @@ bool ExportProfilesList::init(CCSize const& size) {
             ->setGap(2.5f)
     );
     m_list->scrollToTop();
+    m_list->m_scrollLimitTop = 5.f;
     this->addChildAtPosition(m_list, Anchor::Bottom, ccp(-m_list->getScaledContentWidth() / 2, 0));
 
     m_topContainer = CCNode::create();

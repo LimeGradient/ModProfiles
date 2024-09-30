@@ -2,6 +2,7 @@
 
 #include <Geode/Geode.hpp>
 #include "utils/PackInfo.h"
+#include "PackSelectList.h"
 
 using namespace geode::prelude;
 
