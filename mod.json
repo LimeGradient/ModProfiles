@@ -1,13 +1,14 @@
 {
-	"geode": "3.8.1",
+	"geode": "4.1.2",
 	"gd": {
-		"android": "2.206",
-		"win": "2.206",
-		"mac": "2.206"
+		"android": "2.2074",
+		"win": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
 	},
 	"version": "v2.0.0",
 	"id": "limegradient.modprofiles",
-	"name": "Mod Profiles",
+	"name": "Modpacks",
 	"developer": "LimeGradient",
 	"description": "Share your mods with others!",
 	"links": {
@@ -17,13 +18,8 @@
 	"resources": {
 		"spritesheets": {
 			"ModProfilesSheet": [
-				"resources/*.png",
-				"resources/geode/*.png"
+				"resources/*.png"
 			]
-		},
-		"sprites": [
-			"resources/geode/swelve/*.png",
-			"resources/geode/buttons/*.png"
-		]
+		}
 	}
 }

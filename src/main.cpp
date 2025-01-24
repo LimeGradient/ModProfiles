@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 
-#include "UI/ModProfilesPopup.hpp"
+#include "UI/ModProfilesLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -10,6 +10,8 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 		if (!MenuLayer::init()) {
 			return false;
 		}
+
+		
 
 		auto btnSpr = CCSprite::createWithSpriteFrameName("mod-profiles-button.png"_spr);
 		auto btn = CCMenuItemSpriteExtra::create(
@@ -27,7 +29,7 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 	}
 
 	void onModProfiles(CCObject*) {
-		auto popup = ModProfilesPopup::create();
-		popup->show();
+		auto modProfilesLayer = ModProfilesLayer::scene();
+		CCDirector::sharedDirector()->pushScene(CCTransitionFlipAngular::create(0.5f, modProfilesLayer));
 	}
 };
