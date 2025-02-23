@@ -22,15 +22,8 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
-CPMAddPackage("gh:camila314/uibuilder#ba63097")
-
-CPMAddPackage("gh:madler/zlib#v1.3.1")
-set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR}")
-set(ZLIB_LIBRARY "${zlib_BINARY_DIR}/RelWithDebInfo/zlib.lib")
-target_include_directories(${PROJECT_NAME} PRIVATE "${zlib_SOURCE_DIR}")
-target_link_libraries(${PROJECT_NAME} zlib)
-
-CPMAddPackage("gh:kuba--/zip#v0.3.2")
-target_link_libraries(${PROJECT_NAME} UIBuilder zip)
+CPMAddPackage("gh:camila314/uibuilder#cd0f953")
+CPMAddPackage("gh:LimeGradient/ZipLib#8c676b1")
+target_link_libraries(${PROJECT_NAME} UIBuilder ZipLib)
 
 setup_geode_mod(${PROJECT_NAME})

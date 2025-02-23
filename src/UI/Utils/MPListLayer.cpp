@@ -27,7 +27,7 @@ bool MPListLayer::init(std::vector<ModCell*> cells, std::string title) {
     for (ModCell* cell : cells) {
         cell->setContentWidth(m_scrollLayer->getScaledContentWidth());
         cell->m_bg->setContentWidth(m_scrollLayer->getScaledContentWidth() + 125.f);
-        cell->m_infoContainer->setPositionX(cell->m_bg->getScaledContentWidth() / 2);
+        cell->m_infoContainer->setPosition(cell->m_bg->getScaledContentWidth() / 2, 20.f);
         totalHeight += cell->getScaledContentSize().height;
         cell->setPosition(125.f, totalHeight);
 
@@ -35,6 +35,10 @@ bool MPListLayer::init(std::vector<ModCell*> cells, std::string title) {
         m_scrollLayer->m_contentLayer->updateLayout();
         m_scrollLayer->updateLayout();
     }
+
+    m_scrollLayer->m_scrollLimitTop = 5.f;
+    m_scrollLayer->m_scrollLimitBottom = 10.f;
+    m_scrollLayer->scrollToTop();
     
     return true;
 }
