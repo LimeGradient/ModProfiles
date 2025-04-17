@@ -1,9 +1,6 @@
 # v2.0.0
 - Added Packs Menu
     - Allows the user to have many packs and be able to switch between them.
-- Added Pack Index Menu
-    - Download packs from the pack index
-    - To submit packs to the index, [Join the Discord](https://discord.gg/44ANAhXz7r)
 - Reworked UI to look more like Geode's UI
 - Added support for exporting local mods
 - Added new pack schema

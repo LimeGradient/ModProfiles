@@ -42,11 +42,15 @@ bool ModCell::init(Mod* mod) {
     this->m_infoContainer->getLayout()->ignoreInvisibleChildren(true);
 
     std::string developers;
-    for (auto dev : mod->getDevelopers()) {
-        if (dev != mod->getDevelopers().back()) {
-            developers += dev + ", ";
-        } else {
-            developers += dev;
+    if (mod->getDevelopers().size() > 4) {
+        developers = mod->getDevelopers().front();
+    } else {
+        for (auto dev : mod->getDevelopers()) {
+            if (dev != mod->getDevelopers().back()) {
+                developers += dev + ", ";
+            } else {
+                developers += dev;
+            }
         }
     }
 

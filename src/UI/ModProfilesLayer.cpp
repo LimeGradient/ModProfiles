@@ -1,4 +1,5 @@
 #include "ModProfilesLayer.hpp"
+#include "UI/Utils/MPListType.hpp"
 
 bool ModProfilesLayer::init() {
     if (!CCLayer::init()) {
@@ -28,7 +29,13 @@ bool ModProfilesLayer::init() {
     bg->setID("content-background");
     this->addChild(bg);
 
-    Build<MPListLayer>::create(ModBackend::get()->getMods(), "Export Mods")
+    CCMenu* listSelectMenu = Build<CCMenu>::create()
+        .id("list-select-menu")
+        .layout(ColumnLayout::create()->setAutoScale(false)->setGap(5.f))
+        .parent(backMenu)
+        .collect();
+
+    Build<MPListLayer>::create(ModBackend::get()->getMods(), "Export Mods", MPListType::ExportList)
         .id("mp-list-layer")
         .parent(this)
         .center()
@@ -39,7 +46,7 @@ bool ModProfilesLayer::init() {
 
 void ModProfilesLayer::onClose(CCObject*) {
     auto mainMenu = MenuLayer::scene(false);
-    CCDirector::sharedDirector()->pushScene(CCTransitionFlipAngular::create(0.5f, mainMenu));
+    CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, mainMenu));
 }
 
 void ModProfilesLayer::keyBackClicked() {

@@ -11,8 +11,6 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 			return false;
 		}
 
-		
-
 		auto btnSpr = CCSprite::createWithSpriteFrameName("mod-profiles-button.png"_spr);
 		auto btn = CCMenuItemSpriteExtra::create(
 			btnSpr,
@@ -30,6 +28,6 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 
 	void onModProfiles(CCObject*) {
 		auto modProfilesLayer = ModProfilesLayer::scene();
-		CCDirector::sharedDirector()->pushScene(CCTransitionFlipAngular::create(0.5f, modProfilesLayer));
+		CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, modProfilesLayer));
 	}
 };
