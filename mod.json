@@ -10,5 +10,15 @@
 	"name": "ModProfiles",
 	"version": "v1.0.0",
 	"developer": "LimeGradient",
-	"description": "Create and share different mod profiles!"
+	"description": "Create and share different mod profiles!",
+	"dependencies": {
+		"alphalaneous.alphas_geode_utils": "1.0.5"
+	},
+	"resources": {
+		"spritesheets": {
+			"ModProfilesSheet": [
+				"res/*.png"
+			]
+		}
+	}
 }
