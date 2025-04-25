@@ -12,8 +12,7 @@
 	"developer": "LimeGradient",
 	"description": "Share your mods with others!",
 	"links": {
-		"source": "https://github.com/LimeGradient/ModProfiles",
-		"community": "https://discord.gg/FtVqAhcWQN"
+		"source": "https://github.com/LimeGradient/ModProfiles"
 	},
 	"resources": {
 		"spritesheets": {

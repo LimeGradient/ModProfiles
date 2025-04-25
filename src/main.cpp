@@ -1,8 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 
-#include "UI/ModProfilesLayer.hpp"
-
 using namespace geode::prelude;
 
 class $modify(ModProfilesMenuLayer, MenuLayer) {
@@ -27,7 +25,6 @@ class $modify(ModProfilesMenuLayer, MenuLayer) {
 	}
 
 	void onModProfiles(CCObject*) {
-		auto modProfilesLayer = ModProfilesLayer::scene();
-		CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, modProfilesLayer));
+		
 	}
 };
