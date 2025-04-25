@@ -2,8 +2,15 @@
 
 #include <Geode/ui/GeodeUI.hpp>
 
+#include <utils/Mods.hpp>
+
 bool ModProfilesLayer::init() {
     if (!CCLayer::init()) return false;
+
+    auto mods = modutils::Mod::get()->getAllMods();
+    for (auto mod : mods) {
+        log::info("mod found: {}", mod->getID());
+    }
 
     auto winSize = cocos2d::CCDirector::get()->getWinSize();
     this->setID("ServerListLayer"_spr);
