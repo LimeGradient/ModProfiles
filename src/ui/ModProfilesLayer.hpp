@@ -3,12 +3,36 @@
 using namespace geode::prelude;
 
 class ModProfilesLayer : public CCLayer {
-    protected:
-        bool init() override;
-        void keyBackClicked() override;
-    public:
-        void onBack(CCObject *sender);
+protected:
+    bool init() override;
+    void keyBackClicked() override;
 
-        static ModProfilesLayer *create();
-        static CCScene *scene();
+    std::vector<CCMenuItemSpriteExtra*> m_tabs;
+    std::string m_currentTab = "my-packs";
+    std::map<std::string, Ref<ScrollLayer>> m_scrolls;
+
+    CCNode *m_listFrame = nullptr;
+public:
+    void onBack(CCObject *sender);
+    void onTab(CCObject *sender);
+    void goToTab(std::string id);
+
+    static ModProfilesLayer *create();
+    static CCScene *scene();
+};
+
+class TabSprite : public CCNode {
+protected:
+    CCScale9Sprite* m_deselectedBG;
+    CCScale9Sprite* m_selectedBG;
+    CCSprite* m_icon;
+    CCLabelBMFont* m_label;
+
+    bool init(const char* iconFrame, const char* text, float width, bool altColor);
+
+public:
+    static TabSprite* create(const char* iconFrame, const char* text, float width, bool altColor = false);
+
+    void select(bool selected);
+    void disable(bool disabled);
 };
