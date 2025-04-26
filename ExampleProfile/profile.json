@@ -1,0 +1,19 @@
+{
+    "name": "Soggy Profile",
+    "id": "km7dev.soggy",
+    "description": "Soggify your game.",
+    "version": "1.0.0",
+    "creator": "km7dev",
+    "mods": {
+        "geode.node-ids": {
+            "type": "index"
+        },
+        "km7dev.test": {
+            "type": "packed"
+        },
+        "km7dev.test2": {
+            "type": "remote",
+            "url": "https://media.km7dev.tech/km7dev.test2.geode"
+        }
+    }
+}

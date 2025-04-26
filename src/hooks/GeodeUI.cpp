@@ -15,7 +15,7 @@ class $nodeModify(MyModsLayer, ModsLayer) {
 		if (CCMenu* btnMenu = typeinfo_cast<CCMenu*>(getChildByID("right-actions-menu"))) {
 			CCSprite* spr = CircleButtonSprite::createWithSpriteFrameName("profiles.png"_spr, 1.f, geodeTheme ? CircleBaseColor::DarkPurple : CircleBaseColor::Green);
 			spr->setScale(0.8f);
-		    CCMenuItemSpriteExtra* btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(MyModsLayer::onEpicButton));
+		    CCMenuItemSpriteExtra* btn = CCMenuItemSpriteExtra::create(spr, this, menu_selector(MyModsLayer::onModProfiles));
 		    btn->setID("mod-profiles"_spr);
 
 		    btnMenu->addChild(btn);
@@ -23,7 +23,7 @@ class $nodeModify(MyModsLayer, ModsLayer) {
 		}
 	}
 
-	void onEpicButton(CCObject* obj) {
+	void onModProfiles(CCObject* obj) {
 		CCDirector::get()->replaceScene(CCTransitionFade::create(.5f, ModProfilesLayer::scene()));
 	}
 };

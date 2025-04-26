@@ -1,10 +1,10 @@
 #include "ModProfilesLayer.hpp"
-#include "ui/SwelvyBG.hpp"
+#include <ui/SwelvyBG.hpp>
+#include <utils/ModProfiles.hpp>
+#include <utils/Mods.hpp>
 
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/ColorProvider.hpp>
-
-#include <utils/Mods.hpp>
 
 bool ModProfilesLayer::init() {
     if (!CCLayer::init()) return false;
@@ -114,7 +114,6 @@ bool ModProfilesLayer::init() {
             TabSprite::create(std::get<0>(item), std::get<1>(item), 100, std::get<3>(item)),
             this, menu_selector(ModProfilesLayer::onTab)
         );
-        // btn->setUserData(std::get<1>(item));
         btn->setID(std::get<2>(item));
         mainTabs->addChild(btn);
         m_tabs.push_back(btn);
@@ -176,7 +175,20 @@ void ModProfilesLayer::goToTab(std::string tab) {
         auto list = ScrollLayer::create(m_listFrame->getContentSize() - ccp(30, 0));
         list->setPosition(m_listFrame->getContentSize() / 2);
         list->setID(tab);
+        list->ignoreAnchorPointForPosition(false);
         m_listFrame->addChild(list);
+        if (tab == "import") {
+            auto menu = CCMenu::create();
+            menu->setAnchorPoint({.5f, .5f});
+            menu->ignoreAnchorPointForPosition(false);
+            menu->setContentSize(list->getContentSize());
+            list->m_contentLayer->addChildAtPosition(menu, Anchor::Center);
+
+            auto btn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("import.png"_spr), this, menu_selector(ModProfilesLayer::onImport));
+            auto spr = static_cast<CCSprite *>(btn->getChildren()->objectAtIndex(0));
+            spr->addChildAtPosition(CCLabelBMFont::create("DEVELOPMENT\nBUTTON", "bigFont.fnt"), Anchor::Center);
+            menu->addChildAtPosition(btn, Anchor::Center);
+        }
         m_scrolls.emplace(tab, list);
     }
     // Add list to UI
@@ -191,6 +203,61 @@ void ModProfilesLayer::goToTab(std::string tab) {
     // m_lists.at(m_currentSource)->updateDisplay(m_modListDisplay);
     // m_lists.at(m_currentSource)->activateSearch(m_showSearch);
     // m_lists.at(m_currentSource)->updateState();
+}
+
+void ModProfilesLayer::onImport(CCObject *)
+{
+    file::FilePickOptions options = {
+        std::nullopt,
+        {{.description = "Mod Profiles",
+          .files = {"*.modprofile"}}}};
+
+    m_pickListener.bind(this, &ModProfilesLayer::onFileOpen);
+    m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
+}
+
+void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *event)
+{
+    if (event->isCancelled())
+    {
+        return;
+    }
+    if (auto result = event->getValue())
+    {
+        if (!result->isOk())
+        {
+            FLAlertLayer::create(
+                "Error",
+                fmt::format("Failed to open file. Error: {}", result->err().value()),
+                "Ok")
+                ->show();
+            return;
+        }
+
+        auto profile = ModProfile::loadFromPath(result->unwrap());
+        if (!profile.isOk())
+        {
+            FLAlertLayer::create(
+                "Error",
+                fmt::format("Failed to load profile. Error: {}", profile.err().value()),
+                "Ok")
+                ->show();
+            return;
+        }
+        auto modProfile = profile.unwrapOrDefault();
+        log::info("Loaded profile: {}", matjson::Value(modProfile).dump());
+
+        auto texture = new CCTexture2D();
+        texture->initWithImage(modProfile.logo);
+        auto sprite = CCSprite::createWithTexture(texture);
+        texture->release();
+
+        addChildAtPosition(sprite, Anchor::Center, ccp(0, 0), false);
+    }
+}
+
+void ModProfilesLayer::onExport(CCObject *sender) {
+    
 }
 
 

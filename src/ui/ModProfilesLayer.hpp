@@ -10,12 +10,18 @@ protected:
     std::vector<CCMenuItemSpriteExtra*> m_tabs;
     std::string m_currentTab = "my-packs";
     std::map<std::string, Ref<ScrollLayer>> m_scrolls;
+    EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
 
     CCNode *m_listFrame = nullptr;
 public:
     void onBack(CCObject *sender);
     void onTab(CCObject *sender);
+    void onImport(CCObject *sender);
+    void onExport(CCObject *sender);
+
     void goToTab(std::string id);
+
+    void onFileOpen(Task<Result<std::filesystem::path>>::Event *event);
 
     static ModProfilesLayer *create();
     static CCScene *scene();
