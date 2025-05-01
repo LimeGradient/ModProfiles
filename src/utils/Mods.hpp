@@ -13,5 +13,6 @@ namespace modutils {
         }
 
         std::vector<geode::Mod*> getAllMods();
+        matjson::Value jsonFromMod(geode::Mod* mod);
     };
 }

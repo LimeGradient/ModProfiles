@@ -1,6 +1,6 @@
-#include <Geode/Geode.hpp>
+#pragma once
 
-using namespace geode::prelude;
+#include <Geode/Geode.hpp>
 
 struct ModProfile {
     struct Mod {
@@ -20,21 +20,21 @@ struct ModProfile {
     std::string description;
     std::string creator;
     std::string version;
-    Ref<cocos2d::CCImage> logo = nullptr;
+    geode::Ref<cocos2d::CCImage> logo = nullptr;
     std::vector<ModProfile::Mod> mods;
 
     ModProfile() = default;
-    static Result<ModProfile> loadFromPath(std::filesystem::path file);
-    ModProfile(std::string name, std::string id, std::string description, std::string creator, std::string version, Ref<cocos2d::CCImage> logo, std::vector<ModProfile::Mod> mods)
+    static geode::Result<ModProfile> loadFromPath(std::filesystem::path file);
+    ModProfile(std::string name, std::string id, std::string description, std::string creator, std::string version, geode::Ref<cocos2d::CCImage> logo, std::vector<ModProfile::Mod> mods)
         : name(name), id(id), description(description), creator(creator), version(version), logo(logo), mods(mods) {}
 };
 
 template <>
 struct matjson::Serialize<ModProfile>
 {
-    static Result<ModProfile> fromJson(matjson::Value const &value)
+    static geode::Result<ModProfile> fromJson(matjson::Value const &value)
     {
-        return Ok(ModProfile{
+        return geode::Ok(ModProfile{
             value["name"].asString().unwrapOrDefault(),
             value["id"].asString().unwrapOrDefault(),
             value["description"].asString().unwrapOrDefault(),

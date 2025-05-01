@@ -1,5 +1,7 @@
 #include "ModProfiles.hpp"
 
+using namespace geode::prelude;
+
 Result<ModProfile> ModProfile::loadFromPath(std::filesystem::path file) {
     auto path = dirs::getTempDir() / "profiles" / file.stem();
     auto res = file::Unzip::intoDir(file, path);

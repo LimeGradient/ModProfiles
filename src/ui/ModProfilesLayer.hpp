@@ -1,16 +1,16 @@
+#pragma once
+
 #include <Geode/Geode.hpp>
 
-using namespace geode::prelude;
-
-class ModProfilesLayer : public CCLayer {
+class ModProfilesLayer : public cocos2d::CCLayer {
 protected:
     bool init() override;
     void keyBackClicked() override;
 
     std::vector<CCMenuItemSpriteExtra*> m_tabs;
     std::string m_currentTab = "my-packs";
-    std::map<std::string, Ref<ScrollLayer>> m_scrolls;
-    EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
+    std::map<std::string, geode::Ref<geode::ScrollLayer>> m_scrolls;
+    geode::EventListener<geode::Task<geode::Result<std::filesystem::path>>> m_pickListener;
 
     CCNode *m_listFrame = nullptr;
 public:
@@ -21,18 +21,18 @@ public:
 
     void goToTab(std::string id);
 
-    void onFileOpen(Task<Result<std::filesystem::path>>::Event *event);
+    void onFileOpen(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
 
     static ModProfilesLayer *create();
-    static CCScene *scene();
+    static cocos2d::CCScene *scene();
 };
 
-class TabSprite : public CCNode {
+class TabSprite : public cocos2d::CCNode {
 protected:
-    CCScale9Sprite* m_deselectedBG;
-    CCScale9Sprite* m_selectedBG;
-    CCSprite* m_icon;
-    CCLabelBMFont* m_label;
+    cocos2d::extension::CCScale9Sprite* m_deselectedBG;
+    cocos2d::extension::CCScale9Sprite* m_selectedBG;
+    cocos2d::CCSprite* m_icon;
+    cocos2d::CCLabelBMFont* m_label;
 
     bool init(const char* iconFrame, const char* text, float width, bool altColor);
 

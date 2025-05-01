@@ -1,10 +1,13 @@
 #include "ModProfilesLayer.hpp"
+#include <ui/Cell.hpp>
 #include <ui/SwelvyBG.hpp>
 #include <utils/ModProfiles.hpp>
 #include <utils/Mods.hpp>
 
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/ColorProvider.hpp>
+
+using namespace geode::prelude;
 
 bool ModProfilesLayer::init() {
     if (!CCLayer::init()) return false;
@@ -176,6 +179,15 @@ void ModProfilesLayer::goToTab(std::string tab) {
         list->setPosition(m_listFrame->getContentSize() / 2);
         list->setID(tab);
         list->ignoreAnchorPointForPosition(false);
+        list->m_contentLayer->setLayout(ColumnLayout::create()
+            ->setAxisReverse(true)
+            ->setAxisAlignment(AxisAlignment::End)
+            ->setAutoGrowAxis(this->getScaledContentHeight())
+            ->setGrowCrossAxis(false)
+            ->setCrossAxisOverflow(true)
+            ->setGap(45.f)
+        );
+        list->m_scrollLimitTop = 15.f;
         m_listFrame->addChild(list);
         if (tab == "import") {
             auto menu = CCMenu::create();
@@ -247,12 +259,13 @@ void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *ev
         auto modProfile = profile.unwrapOrDefault();
         log::info("Loaded profile: {}", matjson::Value(modProfile).dump());
 
-        auto texture = new CCTexture2D();
-        texture->initWithImage(modProfile.logo);
-        auto sprite = CCSprite::createWithTexture(texture);
-        texture->release();
+        auto list = m_scrolls.at("import");
+        auto cell = Cell::create(CellType::PACK, modProfile, list->getScaledContentWidth());
 
-        addChildAtPosition(sprite, Anchor::Center, ccp(0, 0), false);
+        list->m_contentLayer->removeAllChildren();
+        list->m_contentLayer->addChild(cell);
+        list->m_contentLayer->updateLayout();
+        list->scrollToTop();
     }
 }
 

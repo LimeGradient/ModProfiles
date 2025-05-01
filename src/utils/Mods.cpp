@@ -12,4 +12,14 @@ namespace modutils {
 
         return std::vector<geode::Mod*>{std::begin(mods), std::end(mods)};
     }
+
+    matjson::Value Mod::jsonFromMod(geode::Mod* mod) {
+        return matjson::makeObject({
+            {"id", mod->getID()},
+            {"name", mod->getName()},
+            {"version", mod->getVersion()},
+            {"developers", mod->getDevelopers()},
+            {"logo", mod->getPackagePath()}
+        });
+    }
 }
