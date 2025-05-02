@@ -12,6 +12,7 @@ bool Cell::init(CellType type, Mod* mod, float width) {
 
     this->m_type = type;
     this->m_mod = mod;
+    this->setID(mod->getID());
 
     Build<CCScale9Sprite>::create("square02b_small.png")
         .id("cell-bg")
@@ -121,6 +122,7 @@ bool Cell::init(CellType type, ModProfile profile, float width) {
 
     this->m_type = type;
     this->m_profile = profile;
+    this->setID(profile.id);
 
     Build<CCScale9Sprite>::create("square02b_small.png")
         .id("cell-bg")

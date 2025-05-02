@@ -1,4 +1,7 @@
 #include "ModProfilesLayer.hpp"
+
+#include <filesystem>
+
 #include <ui/Cell.hpp>
 #include <ui/SwelvyBG.hpp>
 #include <utils/ModProfiles.hpp>
@@ -6,6 +9,7 @@
 
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/ColorProvider.hpp>
+#include <UIBuilder.hpp>
 
 using namespace geode::prelude;
 
@@ -185,17 +189,31 @@ void ModProfilesLayer::goToTab(std::string tab) {
         list->m_scrollLimitTop = 5.f;
         m_listFrame->addChild(list);
         if (tab == "import") {
-            auto menu = CCMenu::create();
-            menu->setID("select-menu");
-            menu->setAnchorPoint({.5f, .5f});
-            menu->ignoreAnchorPointForPosition(false);
-            menu->setContentSize(list->getContentSize());
-            list->m_contentLayer->addChildAtPosition(menu, Anchor::Center);
+            if (std::filesystem::exists(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
+                for (auto pack : std::filesystem::directory_iterator(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
+                    auto profile = ModProfile::loadFromPath(pack).unwrapOrDefault();
+                    auto cell = Cell::create(CellType::PACK, profile, list->getScaledContentWidth());
+                    list->m_contentLayer->addChild(cell);
+                }
+                list->m_contentLayer->updateLayout();
+                list->scrollToTop();
+            }
 
-            auto btn = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("import.png"_spr), this, menu_selector(ModProfilesLayer::onImport));
-            auto spr = static_cast<CCSprite *>(btn->getChildren()->objectAtIndex(0));
-            spr->addChildAtPosition(CCLabelBMFont::create("DEVELOPMENT\nBUTTON", "bigFont.fnt"), Anchor::Center);
-            menu->addChildAtPosition(btn, Anchor::Center);
+            auto btn = Build<ButtonSprite>::create("Import", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
+                .scale(0.75f)
+                .intoMenuItem([this]() {
+                    file::FilePickOptions options = {
+                        std::nullopt,
+                        {{.description = "Mod Profiles",
+                          .files = {"*.modprofile"}}}};
+                
+                    this->m_pickListener.bind(this, &ModProfilesLayer::onFileOpen);
+                    this->m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
+                })
+                .intoNewParent(CCMenu::create())
+                .collect();
+
+            this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(btn, Anchor::Center);
         } else if (tab == "export") {
             auto modUtils = modutils::Mod::get();
             for (auto mod : modUtils->getAllMods()) {
@@ -221,17 +239,6 @@ void ModProfilesLayer::goToTab(std::string tab) {
     // m_lists.at(m_currentSource)->updateState();
 }
 
-void ModProfilesLayer::onImport(CCObject *)
-{
-    file::FilePickOptions options = {
-        std::nullopt,
-        {{.description = "Mod Profiles",
-          .files = {"*.modprofile"}}}};
-
-    m_pickListener.bind(this, &ModProfilesLayer::onFileOpen);
-    m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
-}
-
 void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *event)
 {
     if (event->isCancelled())
@@ -250,6 +257,12 @@ void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *ev
             return;
         }
 
+        if (!std::filesystem::exists(fmt::format("{}/packs", Mod::get()->getSaveDir())))
+            std::filesystem::create_directory(fmt::format("{}/packs", Mod::get()->getSaveDir()));
+        if (!std::filesystem::exists(fmt::format("{}/packs/{}", Mod::get()->getSaveDir(), result->unwrap().filename()))) {
+            std::filesystem::copy_file(result->unwrap(), fmt::format("{}/packs/{}", Mod::get()->getSaveDir(), result->unwrap().filename()));
+        }
+
         auto profile = ModProfile::loadFromPath(result->unwrap());
         if (!profile.isOk())
         {
@@ -260,18 +273,21 @@ void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *ev
                 ->show();
             return;
         }
+
         auto modProfile = profile.unwrapOrDefault();
-        log::info("Loaded profile: {}", matjson::Value(modProfile).dump());
-
         auto list = m_scrolls.at("import");
-        auto cell = Cell::create(CellType::PACK, modProfile, list->getScaledContentWidth());
+        if (list->m_contentLayer->getChildByID(modProfile.id)) {
+            return;
+        } else {
+            auto cell = Cell::create(CellType::PACK, modProfile, list->getScaledContentWidth());
 
-        if (auto menu = list->m_contentLayer->getChildByID("select-menu")) {
-            list->m_contentLayer->removeChild(menu);
+            if (auto menu = list->m_contentLayer->getChildByID("select-menu")) {
+                list->m_contentLayer->removeChild(menu);
+            }
+            list->m_contentLayer->addChild(cell);
+            list->m_contentLayer->updateLayout();
+            list->scrollToTop();
         }
-        list->m_contentLayer->addChild(cell);
-        list->m_contentLayer->updateLayout();
-        list->scrollToTop();
     }
 }
 
