@@ -10,16 +10,17 @@ enum class CellType {
 
 class Cell : public cocos2d::CCNode {
 protected:
-    bool init(CellType type, matjson::Value data, float width);
+    bool init(CellType type, geode::Mod* mod, float width);
     bool init(CellType type, ModProfile profile, float width);
 
     bool initMod(matjson::Value data);
     bool initProfile(matjson::Value data);
 
-    void onEnable(CCObject*);
+    void onModEnable(CCObject*);
+    void onPackEnable(CCObject*);
 
     CellType m_type;
-    matjson::Value m_data;
+    geode::Mod* m_mod;
     ModProfile m_profile;
 
     cocos2d::extension::CCScale9Sprite* m_bg;
@@ -33,6 +34,6 @@ protected:
     CCMenuItemToggler* m_toggler;
 
 public:
-    static Cell* create(CellType type, matjson::Value data, float width);
+    static Cell* create(CellType type, geode::Mod* mod, float width);
     static Cell* create(CellType type, ModProfile profile, float width);
 };

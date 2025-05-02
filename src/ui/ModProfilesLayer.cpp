@@ -14,11 +14,6 @@ bool ModProfilesLayer::init() {
 
     bool geodeTheme = Loader::get()->getLoadedMod("geode.loader")->getSettingValue<bool>("enable-geode-theme");
 
-    auto mods = modutils::Mod::get()->getAllMods();
-    for (auto mod : mods) {
-        log::info("mod found: {}", mod->getID());
-    }
-
     auto winSize = CCDirector::get()->getWinSize();
     this->setID("ModProfilesLayer"_spr);
     this->setKeyboardEnabled(true);
@@ -185,12 +180,13 @@ void ModProfilesLayer::goToTab(std::string tab) {
             ->setAutoGrowAxis(this->getScaledContentHeight())
             ->setGrowCrossAxis(false)
             ->setCrossAxisOverflow(true)
-            ->setGap(45.f)
+            ->setGap(5.f)
         );
-        list->m_scrollLimitTop = 15.f;
+        list->m_scrollLimitTop = 5.f;
         m_listFrame->addChild(list);
         if (tab == "import") {
             auto menu = CCMenu::create();
+            menu->setID("select-menu");
             menu->setAnchorPoint({.5f, .5f});
             menu->ignoreAnchorPointForPosition(false);
             menu->setContentSize(list->getContentSize());
@@ -200,6 +196,14 @@ void ModProfilesLayer::goToTab(std::string tab) {
             auto spr = static_cast<CCSprite *>(btn->getChildren()->objectAtIndex(0));
             spr->addChildAtPosition(CCLabelBMFont::create("DEVELOPMENT\nBUTTON", "bigFont.fnt"), Anchor::Center);
             menu->addChildAtPosition(btn, Anchor::Center);
+        } else if (tab == "export") {
+            auto modUtils = modutils::Mod::get();
+            for (auto mod : modUtils->getAllMods()) {
+                auto cell = Cell::create(CellType::MOD, mod, list->getScaledContentWidth());
+                list->m_contentLayer->addChild(cell);
+            }
+            list->m_contentLayer->updateLayout();
+            list->scrollToTop();
         }
         m_scrolls.emplace(tab, list);
     }
@@ -262,7 +266,9 @@ void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *ev
         auto list = m_scrolls.at("import");
         auto cell = Cell::create(CellType::PACK, modProfile, list->getScaledContentWidth());
 
-        list->m_contentLayer->removeAllChildren();
+        if (auto menu = list->m_contentLayer->getChildByID("select-menu")) {
+            list->m_contentLayer->removeChild(menu);
+        }
         list->m_contentLayer->addChild(cell);
         list->m_contentLayer->updateLayout();
         list->scrollToTop();
