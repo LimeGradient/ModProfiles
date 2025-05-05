@@ -27,6 +27,8 @@ struct ModProfile {
     static geode::Result<ModProfile> loadFromPath(std::filesystem::path file);
     ModProfile(std::string name, std::string id, std::string description, std::string creator, std::string version, geode::Ref<cocos2d::CCImage> logo, std::vector<ModProfile::Mod> mods)
         : name(name), id(id), description(description), creator(creator), version(version), logo(logo), mods(mods) {}
+    ModProfile(std::string name, std::string id, std::string description, std::string creator, std::string version, std::vector<ModProfile::Mod> mods)
+        : name(name), id(id), description(description), creator(creator), version(version), mods(mods) {}
 };
 
 template <>

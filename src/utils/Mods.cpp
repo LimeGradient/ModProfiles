@@ -22,4 +22,8 @@ namespace modutils {
             {"logo", mod->getPackagePath()}
         });
     }
+
+    void Mod::createPack(ModProfile profile, std::string logoPath, std::string filePath) {
+
+    }
 }

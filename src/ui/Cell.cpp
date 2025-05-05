@@ -109,7 +109,7 @@ bool Cell::init(CellType type, Mod* mod, float width) {
     Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onPackEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
-        .collect();
+        .store(m_toggler);
     
     this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-15.f, 0.f));
     this->setScaledContentSize(this->m_bg->getScaledContentSize());
@@ -224,7 +224,7 @@ bool Cell::init(CellType type, ModProfile profile, float width) {
     Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onModEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
-        .collect();
+        .store(m_toggler);
     
     this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-15.f, 0.f));
     this->setScaledContentSize(this->m_bg->getScaledContentSize());

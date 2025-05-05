@@ -21,7 +21,8 @@ public:
 
     void goToTab(std::string id);
 
-    void onFileOpen(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
+    void onImport(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
+    void onExport(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
 
     static ModProfilesLayer *create();
     static cocos2d::CCScene *scene();

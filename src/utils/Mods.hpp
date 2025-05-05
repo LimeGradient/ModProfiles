@@ -4,6 +4,8 @@
 
 #include <Geode/loader/Mod.hpp>
 
+#include <utils/ModProfiles.hpp>
+
 namespace modutils {
     class Mod {
     public:
@@ -14,5 +16,7 @@ namespace modutils {
 
         std::vector<geode::Mod*> getAllMods();
         matjson::Value jsonFromMod(geode::Mod* mod);
+
+        void createPack(ModProfile profile, std::string logoPath, std::string filePath);
     };
 }

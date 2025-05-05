@@ -3,6 +3,7 @@
 #include <filesystem>
 
 #include <ui/Cell.hpp>
+#include <ui/PackCreationPopup.hpp>
 #include <ui/SwelvyBG.hpp>
 #include <utils/ModProfiles.hpp>
 #include <utils/Mods.hpp>
@@ -189,6 +190,9 @@ void ModProfilesLayer::goToTab(std::string tab) {
         list->m_scrollLimitTop = 5.f;
         m_listFrame->addChild(list);
         if (tab == "import") {
+            if (auto exportBtn = this->getChildByIDRecursive("export-btn")) {
+                this->removeChild(exportBtn);
+            }
             if (std::filesystem::exists(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
                 for (auto pack : std::filesystem::directory_iterator(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
                     auto profile = ModProfile::loadFromPath(pack).unwrapOrDefault();
@@ -200,6 +204,7 @@ void ModProfilesLayer::goToTab(std::string tab) {
             }
 
             auto btn = Build<ButtonSprite>::create("Import", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
+                .id("import-btn")
                 .scale(0.75f)
                 .intoMenuItem([this]() {
                     file::FilePickOptions options = {
@@ -207,7 +212,7 @@ void ModProfilesLayer::goToTab(std::string tab) {
                         {{.description = "Mod Profiles",
                           .files = {"*.modprofile"}}}};
                 
-                    this->m_pickListener.bind(this, &ModProfilesLayer::onFileOpen);
+                    this->m_pickListener.bind(this, &ModProfilesLayer::onImport);
                     this->m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
                 })
                 .intoNewParent(CCMenu::create())
@@ -215,13 +220,37 @@ void ModProfilesLayer::goToTab(std::string tab) {
 
             this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(btn, Anchor::Center);
         } else if (tab == "export") {
+            if (auto importBtn = this->getChildByIDRecursive("import-btn")) {
+                this->removeChild(importBtn);
+            }
+
+            std::vector<Cell*> cells;
+
             auto modUtils = modutils::Mod::get();
             for (auto mod : modUtils->getAllMods()) {
                 auto cell = Cell::create(CellType::MOD, mod, list->getScaledContentWidth());
+                cells.push_back(cell);
                 list->m_contentLayer->addChild(cell);
             }
             list->m_contentLayer->updateLayout();
             list->scrollToTop();
+
+            std::vector<Mod*> mods;
+            for (auto cell : cells) {
+                if (cell->getMod() != nullptr && cell->isToggled()) 
+                    mods.push_back(cell->getMod());
+            }
+            PackCreationPopup::create(mods)->show();
+
+            auto btn = Build<ButtonSprite>::create("Export", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.75f)
+                .id("export-btn")
+                .intoMenuItem([this, list](auto) {
+
+                })
+                .intoNewParent(CCMenu::create())
+                .collect();
+
+            this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(btn, Anchor::Center);
         }
         m_scrolls.emplace(tab, list);
     }
@@ -239,7 +268,7 @@ void ModProfilesLayer::goToTab(std::string tab) {
     // m_lists.at(m_currentSource)->updateState();
 }
 
-void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *event)
+void ModProfilesLayer::onImport(Task<Result<std::filesystem::path>>::Event *event)
 {
     if (event->isCancelled())
     {
@@ -291,8 +320,27 @@ void ModProfilesLayer::onFileOpen(Task<Result<std::filesystem::path>>::Event *ev
     }
 }
 
-void ModProfilesLayer::onExport(CCObject *sender) {
-    
+void ModProfilesLayer::onExport(Task<Result<std::filesystem::path>>::Event *event) {
+    if (event->isCancelled()) {
+        return;
+    }
+    if (auto result = event->getValue()) {
+        if (!result->isOk()) {
+            FLAlertLayer::create(
+                "Error",
+                fmt::format("Failed to save file. Error: {}", result->err().value()),
+                "Ok")
+                ->show();
+            return;
+        }
+
+        auto list = m_scrolls.at("export");
+        std::vector<Mod*> mods;
+        auto cells = list->m_contentLayer->getChildren();
+        for (auto cell : CCArrayExt<Cell*>(cells)) {
+            if (cell->getMod() != nullptr && cell->isToggled()) mods.push_back(cell->getMod());
+        }
+    }
 }
 
 

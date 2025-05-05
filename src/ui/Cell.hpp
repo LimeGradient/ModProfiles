@@ -36,4 +36,15 @@ protected:
 public:
     static Cell* create(CellType type, geode::Mod* mod, float width);
     static Cell* create(CellType type, ModProfile profile, float width);
+
+    geode::Mod* getMod() {
+        if (m_mod != nullptr) {
+            return m_mod;
+        }
+        return nullptr;
+    }
+
+    bool isToggled() {
+        return m_toggler->isToggled();
+    }
 };
