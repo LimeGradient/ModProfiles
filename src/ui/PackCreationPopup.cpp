@@ -17,7 +17,7 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
         ->setAutoScale(false);
 
 
-    auto createComponent = [menuLayout, this](std::string label, CCPoint offset, TextInput* store) {
+    auto createComponent = [menuLayout, this](std::string label, CCPoint offset, TextInput*& store) {
         auto menu = Build<CCMenu>::create()
             .layout(menuLayout)
             .scale(0.8f)
@@ -73,6 +73,21 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
     
     auto createPackButton = Build<ButtonSprite>::create("Export Pack", "bigFont.fnt", "GJ_button_01.png", 0.8f)
         .intoMenuItem([this]() {
+            if (m_nameInput->getString().empty() || 
+            m_idInput->getString().empty() || 
+            m_descriptionInput->getString().empty() || 
+            m_authorInput->getString().empty() ||
+            m_versionInput->getString().empty() ||
+            m_logoPath.empty()
+        ) {
+            FLAlertLayer::create(
+                "Pack Creation Error!",
+                "One or more of the <cr>Required</c> fields has been left empty.",
+                "Ok"
+            )->show();
+            return;
+        }
+
             m_pickListener.bind(this, &PackCreationPopup::onExport);
             file::FilePickOptions options = {
                 std::nullopt,
@@ -89,7 +104,7 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
         .collect();
 
     logoSelectMenu->addChildAtPosition(logoSelectButton, Anchor::Bottom, ccp(0.f, 35.f));
-    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -15.f));
+    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -45.f));
     m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Center, ccp(100.f, 0.f));
     m_mainLayer->addChildAtPosition(createPackButton, Anchor::Bottom, ccp(100.f, 25.f));
 
@@ -114,7 +129,7 @@ void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event 
             return;
         }
 
-
+        this->m_logoPath = result->unwrap().string();
 
         auto image = new CCImage();
         image->initWithImageFile(result->unwrap().string().c_str());

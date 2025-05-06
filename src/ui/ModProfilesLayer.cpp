@@ -161,6 +161,8 @@ void ModProfilesLayer::onTab(CCObject *sender) {
 }
 
 void ModProfilesLayer::goToTab(std::string tab) {
+    this->clearButtons(tab);
+
     // Update selected tab
     for (auto tabBtn : m_tabs) {
         auto selected = tabBtn->getID() == tab;
@@ -203,22 +205,23 @@ void ModProfilesLayer::goToTab(std::string tab) {
                 list->scrollToTop();
             }
 
-            auto btn = Build<ButtonSprite>::create("Import", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
-                .id("import-btn")
-                .scale(0.75f)
-                .intoMenuItem([this]() {
-                    file::FilePickOptions options = {
-                        std::nullopt,
-                        {{.description = "Mod Profiles",
-                          .files = {"*.modprofile"}}}};
-                
-                    this->m_pickListener.bind(this, &ModProfilesLayer::onImport);
-                    this->m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
-                })
-                .intoNewParent(CCMenu::create())
-                .collect();
+            Build<ButtonSprite>::create("Import", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
+            .id("import-btn")
+            .scale(0.75f)
+            .intoMenuItem([this]() {
+                file::FilePickOptions options = {
+                    std::nullopt,
+                    {{.description = "Mod Profiles",
+                    .files = {"*.modprofile"}}}};
+            
+                this->m_pickListener.bind(this, &ModProfilesLayer::onImport);
+                this->m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
+            })
+            .intoNewParent(CCMenu::create())
+            .store(m_importBtnMenu)
+            .collect();
 
-            this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(btn, Anchor::Center);
+            this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(m_importBtnMenu, Anchor::Center);
         } else if (tab == "export") {
             if (auto importBtn = this->getChildByIDRecursive("import-btn")) {
                 this->removeChild(importBtn);
@@ -235,22 +238,22 @@ void ModProfilesLayer::goToTab(std::string tab) {
             list->m_contentLayer->updateLayout();
             list->scrollToTop();
 
-            std::vector<Mod*> mods;
-            for (auto cell : cells) {
-                if (cell->getMod() != nullptr && cell->isToggled()) 
-                    mods.push_back(cell->getMod());
-            }
-            PackCreationPopup::create(mods)->show();
+            Build<ButtonSprite>::create("Export", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.75f)
+            .id("export-btn")
+            .scale(0.75f)
+            .intoMenuItem([this, cells](auto) {
+                std::vector<Mod*> mods;
+                for (auto cell : cells) {
+                    if (cell->getMod() != nullptr && cell->isToggled()) 
+                        mods.push_back(cell->getMod());
+                }
+                PackCreationPopup::create(mods)->show();
+            })
+            .intoNewParent(CCMenu::create())
+            .store(m_exportBtnMenu)
+            .collect();
 
-            auto btn = Build<ButtonSprite>::create("Export", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.75f)
-                .id("export-btn")
-                .intoMenuItem([this, list](auto) {
-
-                })
-                .intoNewParent(CCMenu::create())
-                .collect();
-
-            this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(btn, Anchor::Center);
+        this->getChildByIDRecursive("frame-bottom-sprite")->addChildAtPosition(m_exportBtnMenu, Anchor::Center);
         }
         m_scrolls.emplace(tab, list);
     }
@@ -343,6 +346,13 @@ void ModProfilesLayer::onExport(Task<Result<std::filesystem::path>>::Event *even
     }
 }
 
+void ModProfilesLayer::clearButtons(std::string tab) {
+    if (m_exportBtnMenu != nullptr) m_exportBtnMenu->setVisible(false);
+    if (m_importBtnMenu != nullptr) m_importBtnMenu->setVisible(false);
+
+    if (tab == "export" && m_exportBtnMenu != nullptr) m_exportBtnMenu->setVisible(true);
+    if (tab == "import" && m_importBtnMenu != nullptr) m_importBtnMenu->setVisible(true);
+}
 
 bool TabSprite::init(const char* iconFrame, const char* text, float width, bool altColor) {
     if (!CCNode::init())

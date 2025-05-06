@@ -13,7 +13,12 @@ protected:
     geode::EventListener<geode::Task<geode::Result<std::filesystem::path>>> m_pickListener;
 
     CCNode *m_listFrame = nullptr;
+
+    cocos2d::CCMenu* m_exportBtnMenu = nullptr;
+    cocos2d::CCMenu* m_importBtnMenu = nullptr;
 public:
+    void clearButtons(std::string tab);
+
     void onBack(CCObject *sender);
     void onTab(CCObject *sender);
     void onImport(CCObject *sender);
