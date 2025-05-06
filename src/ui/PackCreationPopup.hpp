@@ -21,6 +21,8 @@ protected:
     cocos2d::CCSprite* m_logoPreview;
     std::string m_logoPath;
 
+    std::vector<geode::Mod*>& mods;
+
     geode::EventListener<geode::Task<geode::Result<std::filesystem::path>>> m_pickListener;
 
 public:

@@ -13,6 +13,10 @@ struct ModProfile {
         ModType type;
         // For remote mods
         std::string url;
+
+        Mod() = default;
+        Mod(std::string id, ModType type, std::string url = "")
+            : id(id), type(type), url(url) {}
     };
 
     std::string name;

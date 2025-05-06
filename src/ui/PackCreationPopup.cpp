@@ -1,14 +1,16 @@
 #include "PackCreationPopup.hpp"
 
-#include <any>
 #include <UIBuilder.hpp>
 
 #include <utils/ModProfiles.hpp>
+#include <utils/Mods.hpp>
 
 using namespace geode::prelude;
 
 bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
     this->setTitle("Create Pack");
+
+    this->mods = mods;
 
     auto menuLayout = ColumnLayout::create()
         ->setDefaultScaleLimits(.1f, 1.f)
@@ -112,7 +114,39 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
 }
 
 void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *event) {
+    if (event->isCancelled()) {
+        return;
+    }
+    if (auto result = event->getValue()) {
+        if (!result->isOk()) {
+            FLAlertLayer::create(
+                "Error",
+                fmt::format("Failed to save file. Error: {}", result->err().value()),
+                "Ok")
+                ->show();
+            return;
+        }
 
+        std::vector<ModProfile::Mod> modProfileMods;
+        for (auto mod : this->mods) {
+            modProfileMods.push_back(ModProfile::Mod(
+                mod->getID(), ModProfile::Mod::ModType::index
+            ));
+        }
+
+        modutils::Mod::get()->createPack(
+            ModProfile(
+                m_nameInput->getString(),
+                m_idInput->getString(),
+                m_descriptionInput->getString(),
+                m_authorInput->getString(),
+                m_versionInput->getString(),
+                modProfileMods
+            ), 
+            this->m_logoPath, 
+            result->unwrap().string()
+        );
+    }
 }
 
 void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event *event) {
