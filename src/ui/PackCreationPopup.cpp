@@ -7,7 +7,7 @@
 
 using namespace geode::prelude;
 
-bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
+bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
     this->setTitle("Create Pack");
 
     this->mods = mods;
@@ -54,10 +54,7 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
         .anchorPoint({.5f, .5f})
         .collect();
     
-    Build<CCSprite>::create()
-        .scale(.75f)
-        .anchorPoint({.5f, 1.f})
-        .store(m_logoPreview);
+    this->m_logoPreview = LazySprite::create({500.f, 500.f}, false);
     
     auto logoSelectButton = Build<ButtonSprite>::create("Select Logo", "bigFont.fnt", "GJ_button_01.png", 0.8f)
         .intoMenuItem([this]() {
@@ -106,7 +103,7 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
         .collect();
 
     logoSelectMenu->addChildAtPosition(logoSelectButton, Anchor::Bottom, ccp(0.f, 35.f));
-    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -45.f));
+    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -125.f));
     m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Center, ccp(100.f, 0.f));
     m_mainLayer->addChildAtPosition(createPackButton, Anchor::Bottom, ccp(100.f, 25.f));
 
@@ -164,22 +161,11 @@ void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event 
         }
 
         this->m_logoPath = result->unwrap().string();
-
-        auto image = new CCImage();
-        image->initWithImageFile(result->unwrap().string().c_str());
-
-        auto texture = new CCTexture2D();
-        texture->initWithImage(image);
-
-        m_logoPreview->initWithTexture(texture);
-        m_logoPreview->setAnchorPoint(ccp(.5f, 1.f));
-
-        image->release();
-        texture->release();
+        m_logoPreview->loadFromFile(m_logoPath);
     }
 }
 
-PackCreationPopup* PackCreationPopup::create(const std::vector<geode::Mod*> &mods) {
+PackCreationPopup* PackCreationPopup::create(std::vector<geode::Mod*> const& mods) {
     auto ret = new PackCreationPopup();
     if (ret->initAnchored(width, height, mods)) {
         ret->autorelease();
