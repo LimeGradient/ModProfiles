@@ -26,6 +26,7 @@ protected:
     std::string m_logoPath;
 
     std::vector<geode::Mod*> mods;
+    std::vector<ModProfile::Mod> modProfileMods;
 
     geode::EventListener<geode::Task<geode::Result<std::filesystem::path>>> m_pickListener;
 

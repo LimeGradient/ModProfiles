@@ -31,7 +31,8 @@ namespace modutils {
     void Mod::isIndexMod(geode::Mod* mod, std::function<void(ModProfile::Mod::ModType)> callback) {
         web::WebRequest req;
         req.get(fmt::format("https://api.geode-sdk.org/v1/mods/{}", mod->getID())).listen([callback, mod](web::WebResponse* res) {
-            if (res->ok()) {
+            if (!res->ok()) callback(ModProfile::Mod::ModType::packed);
+            else {
                 auto json = res->json().unwrap();
                 if (json["error"].asString().unwrap().empty()) {
                     auto versions = json["payload"]["versions"].asArray().unwrap();
@@ -48,28 +49,55 @@ namespace modutils {
         }, [](auto p) {}, []{});
     }
 
-    void Mod::createPack(ModProfile profile, std::string logoPath, std::string filePath) {
+    geode::Result<void> Mod::createPack(ModProfile profile, std::string logoPath, std::string filePath) {
         matjson::Value profileJSON = profile;
         auto zipRes = file::Zip::create(filePath + ".modprofile");
         file::Zip* zip;
         if (!zipRes) {
             geode::log::error("Create Pack Error: {}", zipRes.unwrapErr());
+            return geode::Err(zipRes.unwrapErr());
         } else {
             zip = &zipRes.unwrap();
         }
 
         std::vector<std::string> localPaths;
         for (auto mod : profile.mods) {
-            geode::log::info("mod info: {} - {}", mod.id, mod.typeToString());
-            if (mod.type == ModProfile::Mod::ModType::packed) {
-                geode::log::info("mod path: {}", mod.path);
-                auto addLocalMods = zip->addFrom(mod.path, "mods");
-                if (!addLocalMods) {
-                    geode::log::error("Error adding local mods: {}", addLocalMods.unwrapErr());
-                } else {
-                    addLocalMods.unwrap();
+            switch (mod.type) {
+                case ModProfile::Mod::ModType::packed: {
+                    auto addLocalMods = zip->addFrom(mod.path, "mods");
+                    if (!addLocalMods) {
+                        geode::log::error("Error adding local mods: {}", addLocalMods.unwrapErr());
+                        return geode::Err(addLocalMods.unwrapErr());
+                    } else {
+                        addLocalMods.unwrap();
+                    }
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::index: {
+                    profileJSON["mods"].set(mod.id, matjson::makeObject({
+                        {"type", mod.typeToString()}
+                    }));
                 }
             }
         }
+
+        auto addProfileJSON = zip->add("profile.json", profileJSON.dump());
+        if (!addProfileJSON) {
+            geode::log::error("Error adding profile JSON: {}", addProfileJSON.unwrapErr());
+            return geode::Err(addProfileJSON.unwrapErr());
+        } else {
+            addProfileJSON.unwrap();
+        }
+
+        auto addLogo = zip->addFrom(logoPath);
+        if (!addLogo) {
+            geode::log::error("Error adding logo: {}", addLogo.unwrapErr());
+            return geode::Err(addLogo.unwrapErr());
+        } else {
+            addLogo.unwrap();
+        }
+
+        return geode::Ok();
     }
 }

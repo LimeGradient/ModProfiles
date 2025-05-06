@@ -10,6 +10,29 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
     this->setTitle("Create Pack");
 
     this->mods = mods;
+    for (auto mod : mods) {
+        modutils::Mod::get()->isIndexMod(mod, [mod, this](ModProfile::Mod::ModType type) mutable {
+            switch (type) {
+                case ModProfile::Mod::ModType::index: {
+                    modProfileMods.push_back(ModProfile::Mod(
+                        mod->getID(), ModProfile::Mod::ModType::index
+                    ));
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::packed: {
+                    modProfileMods.push_back(ModProfile::Mod(
+                        mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
+                    ));
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::remote: {
+                    
+                }
+            }
+        });
+    }
 
     auto menuLayout = ColumnLayout::create()
         ->setDefaultScaleLimits(.1f, 1.f)
@@ -124,12 +147,7 @@ void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *eve
             return;
         }
 
-        this->getProfileMods().andThen([](std::vector<ModProfile::Mod> mods) {
-            
-        });
-        
-
-        modutils::Mod::get()->createPack(
+        auto createPack = modutils::Mod::get()->createPack(
             ModProfile(
                 m_nameInput->getString(),
                 m_idInput->getString(),
@@ -141,6 +159,13 @@ void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *eve
             this->m_logoPath, 
             result->unwrap().string()
         );
+        if (!createPack) {
+            FLAlertLayer::create(
+                "Pack Creation Error!",
+                fmt::format("Failed to create pack: {}", createPack.unwrapErr()),
+                "Ok"
+            )->show();
+        }
     }
 }
 
@@ -162,36 +187,6 @@ void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event 
         m_logoPreview->loadFromFile(m_logoPath);
     }
 }
-
-Result<std::vector<ModProfile::Mod>> PackCreationPopup::getProfileMods() {
-    std::vector<ModProfile::Mod> modProfileMods;
-    for (auto mod : this->mods) {
-        modutils::Mod::get()->isIndexMod(mod, [modProfileMods, mod](ModProfile::Mod::ModType type) mutable {
-            switch (type) {
-                case ModProfile::Mod::ModType::index: {
-                    log::info("mod is index: {}", mod->getID());
-                    modProfileMods.push_back(ModProfile::Mod(
-                        mod->getID(), ModProfile::Mod::ModType::index
-                    ));
-                    break;
-                }
-
-                case ModProfile::Mod::ModType::packed: {
-                    log::info("mod is packed: {}", mod->getID());
-                    modProfileMods.push_back(ModProfile::Mod(
-                        mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
-                    ));
-                    break;
-                }
-
-                case ModProfile::Mod::ModType::remote: {
-                    
-                }
-            }
-        });
-    }
-    return Ok(modProfileMods);
-};
 
 PackCreationPopup* PackCreationPopup::create(std::vector<geode::Mod*> const& mods) {
     auto ret = new PackCreationPopup();

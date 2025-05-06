@@ -18,6 +18,6 @@ namespace modutils {
         matjson::Value jsonFromMod(geode::Mod* mod);
 
         void isIndexMod(geode::Mod* mod, std::function<void(ModProfile::Mod::ModType)> callback);
-        void createPack(ModProfile profile, std::string logoPath, std::string filePath);
+        geode::Result<void> createPack(ModProfile profile, std::string logoPath, std::string filePath);
     };
 }
