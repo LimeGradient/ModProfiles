@@ -17,6 +17,7 @@ namespace modutils {
         std::vector<geode::Mod*> getAllMods();
         matjson::Value jsonFromMod(geode::Mod* mod);
 
+        void isIndexMod(geode::Mod* mod, std::function<void(ModProfile::Mod::ModType)> callback);
         void createPack(ModProfile profile, std::string logoPath, std::string filePath);
     };
 }

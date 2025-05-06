@@ -42,3 +42,11 @@ Result<ModProfile> ModProfile::loadFromPath(std::filesystem::path file) {
 
     return Ok(profile);
 }
+
+std::string ModProfile::Mod::typeToString() {
+    switch (this->type) {
+        case ModType::remote: return "remote";
+        case ModType::index: return "index";
+        case ModType::packed: return "packed";
+    }
+}

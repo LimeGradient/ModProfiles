@@ -2,7 +2,6 @@
 
 #include <UIBuilder.hpp>
 
-#include <utils/ModProfiles.hpp>
 #include <utils/Mods.hpp>
 
 using namespace geode::prelude;
@@ -35,6 +34,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
             .store(store)
             .parent(menu)
             .collect();
+        inputNode->setCommonFilter(CommonFilter::Any);
         
         menu->updateLayout();
         m_mainLayer->addChildAtPosition(menu, Anchor::Center, offset);
@@ -124,12 +124,10 @@ void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *eve
             return;
         }
 
-        std::vector<ModProfile::Mod> modProfileMods;
-        for (auto mod : this->mods) {
-            modProfileMods.push_back(ModProfile::Mod(
-                mod->getID(), ModProfile::Mod::ModType::index
-            ));
-        }
+        this->getProfileMods().andThen([](std::vector<ModProfile::Mod> mods) {
+            
+        });
+        
 
         modutils::Mod::get()->createPack(
             ModProfile(
@@ -164,6 +162,36 @@ void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event 
         m_logoPreview->loadFromFile(m_logoPath);
     }
 }
+
+Result<std::vector<ModProfile::Mod>> PackCreationPopup::getProfileMods() {
+    std::vector<ModProfile::Mod> modProfileMods;
+    for (auto mod : this->mods) {
+        modutils::Mod::get()->isIndexMod(mod, [modProfileMods, mod](ModProfile::Mod::ModType type) mutable {
+            switch (type) {
+                case ModProfile::Mod::ModType::index: {
+                    log::info("mod is index: {}", mod->getID());
+                    modProfileMods.push_back(ModProfile::Mod(
+                        mod->getID(), ModProfile::Mod::ModType::index
+                    ));
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::packed: {
+                    log::info("mod is packed: {}", mod->getID());
+                    modProfileMods.push_back(ModProfile::Mod(
+                        mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
+                    ));
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::remote: {
+                    
+                }
+            }
+        });
+    }
+    return Ok(modProfileMods);
+};
 
 PackCreationPopup* PackCreationPopup::create(std::vector<geode::Mod*> const& mods) {
     auto ret = new PackCreationPopup();

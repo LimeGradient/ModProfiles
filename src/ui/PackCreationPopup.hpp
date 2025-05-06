@@ -2,12 +2,16 @@
 
 #include <Geode/Geode.hpp>
 
+#include <utils/ModProfiles.hpp>
+
 class PackCreationPopup : public geode::Popup<std::vector<geode::Mod*> const&> {
 protected:
     static constexpr float width = 400.f;
     static constexpr float height = 300.f;
 
     bool setup(std::vector<geode::Mod*> const& mods);
+
+    geode::Result<std::vector<ModProfile::Mod>> getProfileMods();
 
     void onExport(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
     void onLogoSelect(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
