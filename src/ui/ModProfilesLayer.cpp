@@ -238,7 +238,7 @@ void ModProfilesLayer::goToTab(std::string tab) {
             list->m_contentLayer->updateLayout();
             list->scrollToTop();
 
-            Build<ButtonSprite>::create("Export", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.75f)
+            Build<ButtonSprite>::create("Export", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
             .id("export-btn")
             .scale(0.75f)
             .intoMenuItem([this, cells](auto) {
