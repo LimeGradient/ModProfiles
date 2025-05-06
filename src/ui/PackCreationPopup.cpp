@@ -46,30 +46,58 @@ bool PackCreationPopup::setup(const std::vector<geode::Mod*> &mods) {
 
     auto logoSelectMenu = Build<CCMenu>::create()
         .layout(menuLayout)
+        .width(width / 2)
+        .height(height)
         .scale(0.8f)
-        .anchorPoint({.5f, .0f})
+        .anchorPoint({.5f, .5f})
         .collect();
     
     Build<CCSprite>::create()
         .scale(.75f)
-        .parent(logoSelectMenu)
+        .anchorPoint({.5f, 1.f})
         .store(m_logoPreview);
     
     auto logoSelectButton = Build<ButtonSprite>::create("Select Logo", "bigFont.fnt", "GJ_button_01.png", 0.8f)
         .intoMenuItem([this]() {
             m_pickListener.bind(this, &PackCreationPopup::onLogoSelect);
-            m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, {
-                std::nullopt
-            }));
+            file::FilePickOptions options = {
+                std::nullopt,
+                {{.description = "Image File",
+                  .files = {"*.png", "*.jpg"}}}};
+            m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
         })
         .intoNewParent(CCMenu::create())
-        .parent(logoSelectMenu)
+        .width(width / 2)
+        .height(height)
+        .collect();
+    
+    auto createPackButton = Build<ButtonSprite>::create("Export Pack", "bigFont.fnt", "GJ_button_01.png", 0.8f)
+        .intoMenuItem([this]() {
+            m_pickListener.bind(this, &PackCreationPopup::onExport);
+            file::FilePickOptions options = {
+                std::nullopt,
+                {{.description = "Mod Profile",
+                .files = {".modprofile"}}}
+            };
+            m_pickListener.setFilter(file::pick(file::PickMode::SaveFile, options));
+        })
+        .intoNewParent(CCMenu::create())
+        .width(width / 2)
+        .height(height)
+        .scale(.8f)
+        .anchorPoint({.0f, .0f})
         .collect();
 
-    logoSelectMenu->updateLayout();
-    m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Center, ccp(75.f, 0.f));
+    logoSelectMenu->addChildAtPosition(logoSelectButton, Anchor::Bottom, ccp(0.f, 35.f));
+    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -15.f));
+    m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Center, ccp(100.f, 0.f));
+    m_mainLayer->addChildAtPosition(createPackButton, Anchor::Bottom, ccp(100.f, 25.f));
 
     return true;
+}
+
+void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *event) {
+
 }
 
 void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event *event) {
@@ -86,13 +114,16 @@ void PackCreationPopup::onLogoSelect(Task<Result<std::filesystem::path>>::Event 
             return;
         }
 
+
+
         auto image = new CCImage();
-        image->initWithImageFile(result->unwrap().c_str());
+        image->initWithImageFile(result->unwrap().string().c_str());
 
         auto texture = new CCTexture2D();
         texture->initWithImage(image);
 
-        m_logoPreview->createWithTexture(texture);
+        m_logoPreview->initWithTexture(texture);
+        m_logoPreview->setAnchorPoint(ccp(.5f, 1.f));
 
         image->release();
         texture->release();

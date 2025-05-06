@@ -9,6 +9,7 @@ protected:
 
     bool setup(const std::vector<geode::Mod*>& mods);
 
+    void onExport(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
     void onLogoSelect(geode::Task<geode::Result<std::filesystem::path>>::Event *event);
 
     geode::TextInput* m_nameInput;
