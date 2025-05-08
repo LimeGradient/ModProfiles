@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+
+#include <ui/ModProfilesLayer.hpp>
 #include <utils/ModProfiles.hpp>
 
 enum class CellType {
@@ -33,6 +35,8 @@ protected:
     cocos2d::CCMenu* m_viewMenu;
     CCMenuItemToggler* m_toggler;
 
+    ModProfilesLayer* m_mpLayer;
+
 public:
     static Cell* create(CellType type, geode::Mod* mod, float width);
     static Cell* create(CellType type, ModProfile profile, float width);
@@ -46,5 +50,9 @@ public:
 
     bool isToggled() {
         return m_toggler->isToggled();
+    }
+
+    void setMPLayer(ModProfilesLayer* layer) {
+        this->m_mpLayer = layer;
     }
 };

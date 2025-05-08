@@ -19,5 +19,8 @@ namespace modutils {
 
         void isIndexMod(geode::Mod* mod, std::function<void(ModProfile::Mod::ModType)> callback);
         geode::Result<void> createPack(ModProfile profile, std::string logoPath, std::string filePath);
+
+        void downloadMod(std::string id, std::function<void()> callback);
+        geode::Result<void> importPack(ModProfile profile);
     };
 }

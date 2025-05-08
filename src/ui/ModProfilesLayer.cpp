@@ -104,14 +104,13 @@ bool ModProfilesLayer::init() {
     mainTabs->setContentWidth(tabsTop->getContentWidth() - 45);
     mainTabs->setAnchorPoint({ .5f, .0f });
     mainTabs->setPosition(m_listFrame->convertToWorldSpace(tabsTop->getPosition() + ccp(0, 8)));
+    mainTabs->setScale(0.8f);
     // Increment touch priority so the mods in the list don't override
     mainTabs->setTouchPriority(-150);
 
     for (auto item : std::initializer_list<std::tuple<const char*, const char*, const char*, bool>> {
-        { "geode.loader/download.png", "My Packs", "my-packs", false },
-        { "geode.loader/globe.png", "Download", "download", false },
-        { "import.png"_spr, "Import", "import", false },
-        { "export.png"_spr, "Export", "export", false },
+        { "import.png"_spr, "My Packs", "import", false },
+        { "export.png"_spr, "Create Pack", "export", false },
     }) {
         auto btn = CCMenuItemSpriteExtra::create(
             TabSprite::create(std::get<0>(item), std::get<1>(item), 100, std::get<3>(item)),

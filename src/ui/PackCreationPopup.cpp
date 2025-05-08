@@ -21,6 +21,8 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
                 }
 
                 case ModProfile::Mod::ModType::packed: {
+                    if (mod->getID() == "geode.loader") break;
+                    
                     modProfileMods.push_back(ModProfile::Mod(
                         mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
                     ));
@@ -165,6 +167,8 @@ void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *eve
                 fmt::format("Failed to create pack: {}", createPack.unwrapErr()),
                 "Ok"
             )->show();
+        } else {
+            createPack.unwrap();
         }
     }
 }

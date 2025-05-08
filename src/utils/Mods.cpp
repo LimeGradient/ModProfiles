@@ -70,6 +70,9 @@ namespace modutils {
                         return geode::Err(addLocalMods.unwrapErr());
                     } else {
                         addLocalMods.unwrap();
+                        profileJSON["mods"].set(mod.id, matjson::makeObject({
+                            {"type", mod.typeToString()}
+                        }));
                     }
                     break;
                 }
@@ -96,6 +99,54 @@ namespace modutils {
             return geode::Err(addLogo.unwrapErr());
         } else {
             addLogo.unwrap();
+        }
+
+        return geode::Ok();
+    }
+
+    void Mod::downloadMod(std::string id, std::function<void()> callback) {
+        web::WebRequest req;
+        req.get(fmt::format("https://api.geode-sdk.org/v1/mods/{}/versions/latest/download", id)).listen([callback](web::WebResponse* res) {
+            if (res->ok()) {
+                auto moveMod = res->into(geode::dirs::getModsDir());
+                if (moveMod) {
+                    moveMod.unwrap();
+                    callback();
+                } else {
+                    moveMod.unwrapErr();
+                }
+            }
+        }, [](auto p){}, []{});
+    }
+
+    geode::Result<void> Mod::importPack(ModProfile profile) {
+        for (auto mod : std::filesystem::directory_iterator(geode::dirs::getModsDir())) {
+            std::filesystem::remove(mod);
+        }
+
+        std::vector<ModProfile::Mod> installedMods;
+
+        for (auto mod : profile.mods) {
+            geode::log::info("mod id and type: {} - {}", mod.id, mod.typeToString());
+            switch (mod.type) {
+                case ModProfile::Mod::ModType::index: {
+                    this->downloadMod(mod.id, [mod, installedMods]() mutable {
+                        installedMods.push_back(mod);
+                    });
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::packed: {
+                    for (auto mod : std::filesystem::directory_iterator(geode::dirs::getTempDir() / "profiles" / profile.name / "mods")) {
+                        std::filesystem::rename(mod, geode::dirs::getModsDir() / mod.path().filename());
+                    }
+                    break;
+                }
+
+                case ModProfile::Mod::ModType::remote: {
+                    break;
+                }
+            }
         }
 
         return geode::Ok();

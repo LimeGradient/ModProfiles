@@ -3,6 +3,7 @@
 #include <Geode/loader/ModMetadata.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 #include <utils/ModProfiles.hpp>
+#include <utils/Mods.hpp>
 #include <UIBuilder.hpp>
 
 using namespace geode::prelude;
@@ -106,7 +107,7 @@ bool Cell::init(CellType type, Mod* mod, float width) {
         .layout(viewLayout)
         .store(this->m_viewMenu);
     
-    Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onPackEnable), 1.f))
+    Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onModEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
         .store(m_toggler);
@@ -221,7 +222,7 @@ bool Cell::init(CellType type, ModProfile profile, float width) {
         .layout(viewLayout)
         .store(this->m_viewMenu);
     
-    Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onModEnable), 1.f))
+    Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onPackEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
         .store(m_toggler);
@@ -237,7 +238,22 @@ void Cell::onModEnable(CCObject*) {
 }
 
 void Cell::onPackEnable(CCObject*) {
-
+    geode::createQuickPopup("Restart Game?", "You need to restart the game to enable this pack, continue?", "Cancel", "Ok",
+        [this](auto, bool btn2) {
+            if (btn2) {
+                auto importPack = modutils::Mod::get()->importPack(this->m_profile);
+                if (!importPack) {
+                    FLAlertLayer::create(
+                        "Pack Selection Error!",
+                        fmt::format("Error selecting this pack: {}", importPack.unwrapErr()),
+                        "Ok"
+                    )->show();
+                    return;
+                } else {
+                    importPack.unwrap();
+                }
+            }
+        });
 }
 
 Cell* Cell::create(CellType type, Mod* mod, float width) {
