@@ -121,7 +121,10 @@ namespace modutils {
 
     geode::Result<void> Mod::importPack(ModProfile profile) {
         for (auto mod : std::filesystem::directory_iterator(geode::dirs::getModsDir())) {
-            std::filesystem::remove(mod);
+            std::vector<std::string> exceptions = {"limegradient.modprofiles.geode", "alphalaneous.alphas_geode_utils.geode"};
+            if (std::find(exceptions.begin(), exceptions.end(), mod.path().filename()) == exceptions.end()) {
+                std::filesystem::remove(mod);
+            }
         }
 
         std::vector<ModProfile::Mod> installedMods;
