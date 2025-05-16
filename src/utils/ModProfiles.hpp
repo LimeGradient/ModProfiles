@@ -21,6 +21,7 @@ struct ModProfile {
             : id(id), type(type), url(url), path(path) {}
         
         std::string typeToString();
+        static ModType stringToType(std::string type);
     };
 
     std::string name;
@@ -44,6 +45,16 @@ struct matjson::Serialize<ModProfile>
 {
     static geode::Result<ModProfile> fromJson(matjson::Value const &value)
     {
+        std::vector<ModProfile::Mod> mpMods;
+        auto mods = value["mods"];
+        for (auto& [key, value] : mods) {
+            mpMods.push_back(ModProfile::Mod(
+                key,
+
+                
+            ))
+        }
+
         return geode::Ok(ModProfile{
             value["name"].asString().unwrapOrDefault(),
             value["id"].asString().unwrapOrDefault(),

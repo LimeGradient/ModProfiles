@@ -50,3 +50,11 @@ std::string ModProfile::Mod::typeToString() {
         case ModType::packed: return "packed";
     }
 }
+
+ModProfile::Mod::ModType ModProfile::Mod::stringToType(std::string type) {
+    if (type == "index") return ModType::index;
+    else if (type == "packed") return ModType::packed;
+    else if (type == "remote") return ModType::remote;
+
+    return ModType::packed;
+}
