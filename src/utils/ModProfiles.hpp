@@ -48,11 +48,14 @@ struct matjson::Serialize<ModProfile>
         std::vector<ModProfile::Mod> mpMods;
         auto mods = value["mods"];
         for (auto& [key, value] : mods) {
+            auto type = value["type"].asString().unwrapOrDefault();
+
             mpMods.push_back(ModProfile::Mod(
                 key,
-
-                
-            ))
+                type == "index" ? ModProfile::Mod::ModType::index : type == "packed" ? ModProfile::Mod::ModType::packed : ModProfile::Mod::ModType::remote,
+                value["url"].asString().unwrapOr(""),
+                fmt::format("mods/{}.geode", key)
+            ));
         }
 
         return geode::Ok(ModProfile{
@@ -62,7 +65,7 @@ struct matjson::Serialize<ModProfile>
             value["creator"].asString().unwrapOrDefault(),
             value["version"].asString().unwrapOrDefault(),
             nullptr,
-            {}
+            mpMods
         });
     }
 

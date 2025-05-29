@@ -21,6 +21,7 @@ protected:
     geode::TextInput* m_descriptionInput;
     geode::TextInput* m_authorInput;
     geode::TextInput* m_versionInput;
+    std::string m_versionWarning;
 
     geode::LazySprite* m_logoPreview;
     std::string m_logoPath;

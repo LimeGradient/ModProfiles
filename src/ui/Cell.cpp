@@ -6,6 +6,8 @@
 #include <utils/Mods.hpp>
 #include <UIBuilder.hpp>
 
+// #include "PackCreationPopup.hpp"
+
 using namespace geode::prelude;
 
 bool Cell::init(CellType type, Mod* mod, float width) {
@@ -15,14 +17,16 @@ bool Cell::init(CellType type, Mod* mod, float width) {
     this->m_mod = mod;
     this->setID(mod->getID());
 
+    bool geodeTheme = Loader::get()->getLoadedMod("geode.loader")->getSettingValue<bool>("enable-geode-theme");
+
     Build<CCScale9Sprite>::create("square02b_small.png")
         .id("cell-bg")
-        .opacity(25)
+        .opacity(geodeTheme ? 25 : 90)
+        .color(geodeTheme ? ccWHITE : ccBLACK)
         .ignoreAnchorPointForPos(false)
         .anchorPoint({.0f, .0f})
         .width(width)
         .height(35.f)
-        .color(ccWHITE)
         .parent(this)
         .store(this->m_bg);
 
@@ -101,18 +105,19 @@ bool Cell::init(CellType type, Mod* mod, float width) {
 
     Build<CCMenu>::create()
         .id("view-menu")
-        .anchorPoint({0.f, 0.f})
-        .contentSize({50.f, 50.f})
-        .scale(.55f)
+        .anchorPoint({1.f, .5f})
+        .contentSize({50.f, 25.f})
         .layout(viewLayout)
+        .scale(.55f)
         .store(this->m_viewMenu);
     
     Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onModEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
         .store(m_toggler);
-    
-    this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-15.f, 0.f));
+
+    m_viewMenu->updateLayout();
+    this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-7.5f, 0.f));
     this->setScaledContentSize(this->m_bg->getScaledContentSize());
 
     return true;
@@ -125,27 +130,28 @@ bool Cell::init(CellType type, ModProfile profile, float width) {
     this->m_profile = profile;
     this->setID(profile.id);
 
+    bool geodeTheme = Loader::get()->getLoadedMod("geode.loader")->getSettingValue<bool>("enable-geode-theme");
+
     Build<CCScale9Sprite>::create("square02b_small.png")
         .id("cell-bg")
-        .opacity(25)
+        .opacity(geodeTheme ? 25 : 90)
+        .color(geodeTheme ? ccWHITE : ccBLACK)
         .ignoreAnchorPointForPos(false)
         .anchorPoint({.0f, .0f})
         .width(width)
         .height(35.f)
-        .color(ccWHITE)
         .parent(this)
         .store(this->m_bg);
 
-    auto texture = new CCTexture2D();
-    texture->initWithImage(profile.logo);
-    auto sprite = CCSprite::createWithTexture(texture);
-    texture->release();
+    auto sprite = LazySprite::create({25, 25}, true);
+    sprite->setAutoResize(true);
+    sprite->loadFromFile(dirs::getTempDir() / GEODE_MOD_ID / "profiles" / profile.id / "logo.png");
     
     auto logo = Build(sprite)
         .id("logo")
-        .scale(.15f)
         .anchorPoint({.5f, .5f})
         .collect();
+    // logo->setScale(std::min(25 / logo->getContentSize().width, 25 / logo->getContentSize().height));
     this->addChildAtPosition(logo, Anchor::Left, ccp(17.5, 17.5));
 
     auto infoLayout = ColumnLayout::create()
@@ -204,30 +210,36 @@ bool Cell::init(CellType type, ModProfile profile, float width) {
     auto devLabel = Build(CCLabelBMFont::create(profile.creator.c_str(), "goldFont.fnt"))
         .id("developer-label")
         .scale(0.35f)
-        .anchorPoint({0.f, 0.5f})
+        .anchorPoint({0.f, 0.35f})
         .collect();
     this->m_infoContainer->addChildAtPosition(devLabel, Anchor::BottomLeft, ccp(35.f, 10.f));
 
     auto viewLayout = RowLayout::create()
         ->setAxisReverse(true)
         ->setAxisAlignment(AxisAlignment::End)
-        ->setGap(10);
+        ->setGap(2.5)
+        ->setAutoGrowAxis(true);
     viewLayout->ignoreInvisibleChildren(true);
 
     Build<CCMenu>::create()
         .id("view-menu")
-        .anchorPoint({0.f, 0.f})
-        .contentSize({50.f, 50.f})
-        .scale(.55f)
+        .anchorPoint({1.f, .5f})
+        .contentSize({50.f, 25.f})
         .layout(viewLayout)
+        .scale(.55f)
         .store(this->m_viewMenu);
     
     Build(CCMenuItemToggler::createWithStandardSprites(this, menu_selector(Cell::onPackEnable), 1.f))
         .id("toggler")
         .parent(m_viewMenu)
         .store(m_toggler);
-    
-    this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-15.f, 0.f));
+
+    // Build(CCMenuItemSpriteExtra::create(EditorButtonSprite::createWithSpriteFrameName("edit.png"_spr, 1, EditorBaseColor::Gray), this, menu_selector(Cell::onPackEdit)))
+    //     .id("edit")
+    //     .parent(m_viewMenu);
+
+    m_viewMenu->updateLayout();
+    this->m_infoContainer->addChildAtPosition(this->m_viewMenu, Anchor::Right, ccp(-7.5f, 0.f));
     this->setScaledContentSize(this->m_bg->getScaledContentSize());
 
     return true;
@@ -238,22 +250,31 @@ void Cell::onModEnable(CCObject*) {
 }
 
 void Cell::onPackEnable(CCObject*) {
-    geode::createQuickPopup("Restart Game?", "You need to restart the game to enable this pack, continue?", "Cancel", "Ok",
-        [this](auto, bool btn2) {
+        geode::createQuickPopup(
+            "Select pack?",
+            "Selecting this pack will <cr>uninstall</c> all of your current mods and <cy>restart the game</c>. Are you sure you want to select this pack?",
+            "Cancel", 
+            "Ok",
+            [this](auto, bool btn2) {
             if (btn2) {
                 auto importPack = modutils::Mod::get()->importPack(this->m_profile);
                 if (!importPack) {
-                    FLAlertLayer::create(
-                        "Pack Selection Error!",
-                        fmt::format("Error selecting this pack: {}", importPack.unwrapErr()),
-                        "Ok"
-                    )->show();
-                    return;
+                FLAlertLayer::create(
+                    "<cr>Pack Selection Error!</c>",
+                    fmt::format("Error selecting this pack: <cr>{}</c>", importPack.unwrapErr()),
+                    "<cg>Ok</c>"
+                )->show();
                 } else {
-                    importPack.unwrap();
+                importPack.unwrap();
+                game::restart();
                 }
             }
-        });
+            }
+        );
+}
+
+void Cell::onPackEdit(CCObject*) {
+
 }
 
 Cell* Cell::create(CellType type, Mod* mod, float width) {

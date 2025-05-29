@@ -8,7 +8,7 @@ protected:
     void keyBackClicked() override;
 
     std::vector<CCMenuItemSpriteExtra*> m_tabs;
-    std::string m_currentTab = "my-packs";
+    std::string m_currentTab = "import";
     std::map<std::string, geode::Ref<geode::ScrollLayer>> m_scrolls;
     geode::EventListener<geode::Task<geode::Result<std::filesystem::path>>> m_pickListener;
 

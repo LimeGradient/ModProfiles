@@ -14,6 +14,10 @@ namespace modutils {
         std::list<geode::Mod*> mods;
         std::ranges::copy(geode::Loader::get()->getAllMods(), std::back_inserter(mods));
         mods.sort(sort_by_name);
+        static std::vector<std::string> exceptions = getExceptions();
+        mods.remove_if([](geode::Mod* mod) {
+            return std::find(exceptions.begin(), exceptions.end(), mod->getID()) != exceptions.end();
+        });
 
         return std::vector<geode::Mod*>{std::begin(mods), std::end(mods)};
     }
@@ -35,12 +39,14 @@ namespace modutils {
             else {
                 auto json = res->json().unwrap();
                 if (json["error"].asString().unwrap().empty()) {
-                    auto versions = json["payload"]["versions"].asArray().unwrap();
-                    auto latestVersion = versions.front()["version"].asString().unwrap();
-                    if (latestVersion == mod->getVersion().toNonVString()) {
-                        callback(ModProfile::Mod::ModType::index);
-                    } else {
-                        callback(ModProfile::Mod::ModType::packed);
+                    for (auto version : json["payload"]["versions"]) {
+                        if (version["status"].asString().unwrapOrDefault() != "accepted") continue;
+                        if (version["version"].asString().unwrapOrDefault() == mod->getVersion().toNonVString()) {
+                            callback(ModProfile::Mod::ModType::index);
+                        } else {
+                            callback(ModProfile::Mod::ModType::packed);
+                        }
+                        break;
                     }
                 } else {
                     callback(ModProfile::Mod::ModType::packed);
@@ -51,7 +57,7 @@ namespace modutils {
 
     geode::Result<void> Mod::createPack(ModProfile profile, std::string logoPath, std::string filePath) {
         matjson::Value profileJSON = profile;
-        auto zipRes = file::Zip::create(filePath + ".modprofile");
+        auto zipRes = file::Zip::create(filePath);
         file::Zip* zip;
         if (!zipRes) {
             geode::log::error("Create Pack Error: {}", zipRes.unwrapErr());
@@ -76,10 +82,15 @@ namespace modutils {
                     }
                     break;
                 }
-
                 case ModProfile::Mod::ModType::index: {
                     profileJSON["mods"].set(mod.id, matjson::makeObject({
                         {"type", mod.typeToString()}
+                    }));
+                }
+                case ModProfile::Mod::ModType::remote: {
+                    profileJSON["mods"].set(mod.id, matjson::makeObject({
+                        {"type", mod.typeToString()},
+                        {"url", mod.url}
                     }));
                 }
             }
@@ -92,14 +103,24 @@ namespace modutils {
         } else {
             addProfileJSON.unwrap();
         }
-
-        auto addLogo = zip->addFrom(logoPath);
+        if (!std::filesystem::exists(geode::dirs::getTempDir() / GEODE_MOD_ID)) {
+            std::filesystem::create_directory(geode::dirs::getTempDir() / GEODE_MOD_ID);
+        } else if (std::filesystem::exists(geode::dirs::getTempDir() / GEODE_MOD_ID / "logo.png" )) {
+            std::filesystem::remove_all(geode::dirs::getTempDir() / GEODE_MOD_ID / "logo.png");
+        }
+        std::error_code error;
+        std::filesystem::copy(logoPath, geode::dirs::getTempDir() / GEODE_MOD_ID / "logo.png", error);
+        if (error) {
+            geode::log::error("Error moving logo: {}", error.message());
+            return geode::Err("Error moving logo: {}", error.message());
+        }
+        auto addLogo = zip->addFrom(geode::dirs::getTempDir() / GEODE_MOD_ID / "logo.png");
         if (!addLogo) {
             geode::log::error("Error adding logo: {}", addLogo.unwrapErr());
-            return geode::Err(addLogo.unwrapErr());
-        } else {
-            addLogo.unwrap();
+            return geode::Err("Error moving logo: {}", addLogo.unwrapErr());
         }
+        addLogo.unwrap();
+        std::filesystem::remove_all(geode::dirs::getTempDir() / GEODE_MOD_ID / "logo.png");
 
         return geode::Ok();
     }
@@ -121,8 +142,10 @@ namespace modutils {
 
     geode::Result<void> Mod::importPack(ModProfile profile) {
         for (auto mod : std::filesystem::directory_iterator(geode::dirs::getModsDir())) {
-            std::vector<std::string> exceptions = {"limegradient.modprofiles.geode", "alphalaneous.alphas_geode_utils.geode"};
-            if (std::find(exceptions.begin(), exceptions.end(), mod.path().filename()) == exceptions.end()) {
+            static std::vector<std::string> exceptions = getExceptions();
+            auto name = mod.path().stem().string();
+            geode::log::info("{}", name);
+            if (std::find(exceptions.begin(), exceptions.end(), name) == exceptions.end()) {
                 std::filesystem::remove(mod);
             }
         }
@@ -140,7 +163,7 @@ namespace modutils {
                 }
 
                 case ModProfile::Mod::ModType::packed: {
-                    for (auto mod : std::filesystem::directory_iterator(geode::dirs::getTempDir() / "profiles" / profile.name / "mods")) {
+                    for (auto mod : std::filesystem::directory_iterator(geode::dirs::getTempDir() / GEODE_MOD_ID / "profiles" / profile.id / "mods")) {
                         std::filesystem::rename(mod, geode::dirs::getModsDir() / mod.path().filename());
                     }
                     break;
@@ -153,5 +176,10 @@ namespace modutils {
         }
 
         return geode::Ok();
+    }
+
+    std::vector<std::string> Mod::getExceptions() {
+        static std::vector<std::string> exceptions = {"geode.loader", "limegradient.modprofiles", "alphalaneous.alphas_geode_utils"};
+        return exceptions;
     }
 }

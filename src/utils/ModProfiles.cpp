@@ -1,9 +1,10 @@
 #include "ModProfiles.hpp"
+#include "Mods.hpp"
 
 using namespace geode::prelude;
 
 Result<ModProfile> ModProfile::loadFromPath(std::filesystem::path file) {
-    auto path = dirs::getTempDir() / "profiles" / file.stem();
+    auto path = dirs::getTempDir() / GEODE_MOD_ID / "unzip" / file.stem();
     auto res = file::Unzip::intoDir(file, path);
     if (!res.isOk()) {
         log::error("Failed to pick profile: {}", res.err().value());
@@ -21,8 +22,15 @@ Result<ModProfile> ModProfile::loadFromPath(std::filesystem::path file) {
         return Err(json.err().value());
     }
     auto profile = json.unwrap().as<ModProfile>().unwrapOrDefault();
+    auto destination = dirs::getTempDir() / GEODE_MOD_ID / "profiles" / profile.id;
+    try {
+        std::filesystem::rename(path, destination);
+    } catch (const std::filesystem::filesystem_error& e) {
+        log::error("Failed to move folder: {}", e.what());
+        return Err(e.what());
+    }
 
-    auto icon = path / "icon.png";
+    auto icon = destination / "icon.png";
     if (std::filesystem::exists(icon)) {
         auto imgfile = file::readBinary(icon);
         if (!imgfile.isOk()) {

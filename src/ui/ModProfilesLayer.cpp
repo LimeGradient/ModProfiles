@@ -124,7 +124,7 @@ bool ModProfilesLayer::init() {
     mainTabs->setLayout(RowLayout::create());
     this->addChild(mainTabs);
 
-    goToTab("my-packs");
+    goToTab(m_currentTab);
 
     return true;
 }
@@ -186,7 +186,7 @@ void ModProfilesLayer::goToTab(std::string tab) {
             ->setAutoGrowAxis(this->getScaledContentHeight())
             ->setGrowCrossAxis(false)
             ->setCrossAxisOverflow(true)
-            ->setGap(5.f)
+            ->setGap(2.5f)
         );
         list->m_scrollLimitTop = 5.f;
         m_listFrame->addChild(list);
@@ -194,15 +194,12 @@ void ModProfilesLayer::goToTab(std::string tab) {
             if (auto exportBtn = this->getChildByIDRecursive("export-btn")) {
                 this->removeChild(exportBtn);
             }
-            if (std::filesystem::exists(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
-                for (auto pack : std::filesystem::directory_iterator(fmt::format("{}/packs", Mod::get()->getSaveDir()))) {
-                    auto profile = ModProfile::loadFromPath(pack).unwrapOrDefault();
-                    auto cell = Cell::create(CellType::PACK, profile, list->getScaledContentWidth());
-                    list->m_contentLayer->addChild(cell);
-                }
-                list->m_contentLayer->updateLayout();
-                list->scrollToTop();
+            for (auto profile : modutils::Mod::get()->profiles) {
+                auto cell = Cell::create(CellType::PACK, profile, list->getScaledContentWidth());
+                list->m_contentLayer->addChild(cell);
             }
+            list->m_contentLayer->updateLayout();
+            list->scrollToTop();
 
             Build<ButtonSprite>::create("Import", "bigFont.fnt", "geode.loader/GE_button_05.png", 0.8f)
             .id("import-btn")
@@ -306,6 +303,7 @@ void ModProfilesLayer::onImport(Task<Result<std::filesystem::path>>::Event *even
         }
 
         auto modProfile = profile.unwrapOrDefault();
+        modutils::Mod::get()->profiles.push_back(modProfile);
         auto list = m_scrolls.at("import");
         if (list->m_contentLayer->getChildByID(modProfile.id)) {
             return;

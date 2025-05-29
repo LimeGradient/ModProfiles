@@ -14,6 +14,8 @@ namespace modutils {
             return &instance;
         }
 
+        std::vector<ModProfile> profiles;
+
         std::vector<geode::Mod*> getAllMods();
         matjson::Value jsonFromMod(geode::Mod* mod);
 
@@ -22,5 +24,7 @@ namespace modutils {
 
         void downloadMod(std::string id, std::function<void()> callback);
         geode::Result<void> importPack(ModProfile profile);
+
+        static std::vector<std::string> getExceptions();
     };
 }

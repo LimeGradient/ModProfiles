@@ -2,6 +2,7 @@
 
 #include <UIBuilder.hpp>
 
+#include <regex>
 #include <utils/Mods.hpp>
 
 using namespace geode::prelude;
@@ -22,7 +23,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
 
                 case ModProfile::Mod::ModType::packed: {
                     if (mod->getID() == "geode.loader") break;
-                    
+
                     modProfileMods.push_back(ModProfile::Mod(
                         mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
                     ));
@@ -30,7 +31,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
                 }
 
                 case ModProfile::Mod::ModType::remote: {
-                    
+
                 }
             }
         });
@@ -41,35 +42,51 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
         ->setAxisAlignment(AxisAlignment::Start)
         ->setAxisReverse(true)
         ->setAutoScale(false);
+    auto leftMenu = Build<CCMenu>::create()
+                .layout(menuLayout)
+                .scale(0.8f)
+                .anchorPoint({.5f, .0f})
+                .collect();
 
-
-    auto createComponent = [menuLayout, this](std::string label, CCPoint offset, TextInput*& store) {
-        auto menu = Build<CCMenu>::create()
-            .layout(menuLayout)
-            .scale(0.8f)
-            .anchorPoint({.5f, .0f})
-            .collect();
-        
+    auto createComponent = [leftMenu, this](std::string label, CCPoint offset, TextInput*& store, CommonFilter filter = CommonFilter::Any, std::function<void(std::string const&)> func = nullptr) {
         auto labelNode = Build(CCLabelBMFont::create(label.c_str(), "bigFont.fnt"))
             .scale(0.65f)
-            .parent(menu)
+            .parent(leftMenu)
             .collect();
-        
+
         auto inputNode = Build<TextInput>::create(200.f, label.c_str(), "chatFont.fnt")
             .store(store)
-            .parent(menu)
+            .parent(leftMenu)
             .collect();
-        inputNode->setCommonFilter(CommonFilter::Any);
-        
-        menu->updateLayout();
-        m_mainLayer->addChildAtPosition(menu, Anchor::Center, offset);
-    };
 
-    createComponent("Pack Name:", ccp(-100.f, 65.f), m_nameInput);
-    createComponent("Pack ID:", ccp(-100.f, 15.f), m_idInput);
-    createComponent("Pack Description:", ccp(-100.f, -35.f), m_descriptionInput);
-    createComponent("Pack Creator", ccp(-100.f, -85.f), m_authorInput);
-    createComponent("Pack Version", ccp(-100.f, -135.f), m_versionInput);
+        inputNode->setCommonFilter(filter);
+        inputNode->setCallback(func);
+
+        leftMenu->updateLayout();
+    };
+    m_mainLayer->addChildAtPosition(leftMenu, Anchor::Center, {-100,-125});
+
+    createComponent("Pack Name", ccp(-100.f, 65.f), m_nameInput, CommonFilter::Name);
+    createComponent("Pack ID", ccp(-100.f, 15.f), m_idInput, CommonFilter::ID);
+    createComponent("Pack Description", ccp(-100.f, -35.f), m_descriptionInput, CommonFilter::Any);
+    createComponent("Pack Creator", ccp(-100.f, -85.f), m_authorInput, CommonFilter::Name);
+    auto verWarnBtn = CCMenuItemExt::createSpriteExtraWithFrameName("exMark_001.png", .45f, [this](CCMenuItemSpriteExtra*){
+        FLAlertLayer::create("Invalid version", m_versionWarning.c_str(), "Ok")->show();
+    });
+    verWarnBtn->setVisible(false);
+    createComponent("Pack Version", ccp(-100.f, -135.f), m_versionInput, CommonFilter::ID, [this, verWarnBtn](std::string const& text) {
+        if (text == "") return verWarnBtn->setVisible(false);
+        auto vi = VersionInfo::parse(text);
+        if (vi.isErr()) {
+            m_versionInput->getInputNode()->getTextLabel()->setColor(ccc3(200, 30, 30));
+            verWarnBtn->setVisible(true);
+            m_versionWarning = std::string(vi.unwrapErr());
+        } else {
+            m_versionInput->getInputNode()->getTextLabel()->setColor(ccc3(255, 255, 255));
+            verWarnBtn->setVisible(false);
+        }
+    });
+    m_buttonMenu->addChildAtPosition(verWarnBtn, Anchor::BottomLeft, {leftMenu->getPositionX() + m_versionInput->getContentWidth() / 2 - verWarnBtn->getContentWidth() - 11.25f, 17.5f + m_versionInput->getContentHeight()});
 
     auto logoSelectMenu = Build<CCMenu>::create()
         .layout(menuLayout)
@@ -78,9 +95,10 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
         .scale(0.8f)
         .anchorPoint({.5f, .5f})
         .collect();
-    
-    this->m_logoPreview = LazySprite::create({500.f, 500.f}, false);
-    
+
+    this->m_logoPreview = Build<LazySprite>::create(CCSize{125.f, 125.f}, false).collect();
+    m_logoPreview->setAutoResize(true);
+
     auto logoSelectButton = Build<ButtonSprite>::create("Select Logo", "bigFont.fnt", "GJ_button_01.png", 0.8f)
         .intoMenuItem([this]() {
             m_pickListener.bind(this, &PackCreationPopup::onLogoSelect);
@@ -90,27 +108,24 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
                   .files = {"*.png", "*.jpg"}}}};
             m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
         })
-        .intoNewParent(CCMenu::create())
-        .width(width / 2)
-        .height(height)
-        .collect();
-    
-    auto createPackButton = Build<ButtonSprite>::create("Export Pack", "bigFont.fnt", "GJ_button_01.png", 0.8f)
+    .collect();
+
+    auto exportButton = Build<ButtonSprite>::create("Export Pack", "bigFont.fnt", "GJ_button_01.png", 0.8f)
         .intoMenuItem([this]() {
-            if (m_nameInput->getString().empty() || 
-            m_idInput->getString().empty() || 
-            m_descriptionInput->getString().empty() || 
-            m_authorInput->getString().empty() ||
-            m_versionInput->getString().empty() ||
-            m_logoPath.empty()
-        ) {
-            FLAlertLayer::create(
-                "Pack Creation Error!",
-                "One or more of the <cr>Required</c> fields has been left empty.",
-                "Ok"
-            )->show();
-            return;
-        }
+            if (m_nameInput->getString().empty() ||
+                m_idInput->getString().empty() ||
+                m_descriptionInput->getString().empty() ||
+                m_authorInput->getString().empty() ||
+                m_versionInput->getString().empty() ||
+                m_logoPath.empty()
+            ) {
+                FLAlertLayer::create(
+                    "Pack Creation Error!",
+                    "One or more of the <cr>Required</c> fields has been left empty.",
+                    "Ok"
+                )->show();
+                return;
+            }
 
             m_pickListener.bind(this, &PackCreationPopup::onExport);
             file::FilePickOptions options = {
@@ -120,17 +135,13 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
             };
             m_pickListener.setFilter(file::pick(file::PickMode::SaveFile, options));
         })
-        .intoNewParent(CCMenu::create())
-        .width(width / 2)
-        .height(height)
-        .scale(.8f)
-        .anchorPoint({.0f, .0f})
         .collect();
 
-    logoSelectMenu->addChildAtPosition(logoSelectButton, Anchor::Bottom, ccp(0.f, 35.f));
-    logoSelectMenu->addChildAtPosition(m_logoPreview, Anchor::Top, ccp(0.f, -125.f));
-    m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Center, ccp(100.f, 0.f));
-    m_mainLayer->addChildAtPosition(createPackButton, Anchor::Bottom, ccp(100.f, 25.f));
+    logoSelectMenu->addChild(logoSelectButton);
+    logoSelectMenu->addChild(exportButton);
+    logoSelectMenu->updateLayout();
+    m_mainLayer->addChildAtPosition(m_logoPreview, Anchor::Right, ccp(-112.5f, 25.f));
+    m_mainLayer->addChildAtPosition(logoSelectMenu, Anchor::Right, ccp(-112.5f, 0.f));
 
     return true;
 }
@@ -157,18 +168,24 @@ void PackCreationPopup::onExport(Task<Result<std::filesystem::path>>::Event *eve
                 m_authorInput->getString(),
                 m_versionInput->getString(),
                 modProfileMods
-            ), 
-            this->m_logoPath, 
+            ),
+            this->m_logoPath,
             result->unwrap().string()
         );
         if (!createPack) {
             FLAlertLayer::create(
-                "Pack Creation Error!",
+                "Pack Creation",
                 fmt::format("Failed to create pack: {}", createPack.unwrapErr()),
                 "Ok"
             )->show();
         } else {
-            createPack.unwrap();
+            // createPack.unwrap();
+            FLAlertLayer::create(
+                "Pack Creation",
+                "Pack created successfully.",
+                "Ok"
+            )->show();
+            onClose(nullptr);
         }
     }
 }

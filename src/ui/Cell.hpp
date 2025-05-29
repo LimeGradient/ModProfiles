@@ -20,6 +20,7 @@ protected:
 
     void onModEnable(CCObject*);
     void onPackEnable(CCObject*);
+    void onPackEdit(CCObject*);
 
     CellType m_type;
     geode::Mod* m_mod;
