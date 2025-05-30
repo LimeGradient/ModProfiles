@@ -9,29 +9,38 @@ using namespace geode::prelude;
 
 bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
     this->setTitle("Create Pack");
+    setID("PackCreationPopup"_spr);
+    m_mainLayer->setID("main-layer");
+    m_bgSprite->setID("background");
+    m_title->setID("title");
+    m_buttonMenu->setID("button-menu");
+    m_closeBtn->setID("close-button");
 
     this->mods = mods;
     for (auto mod : mods) {
         modutils::Mod::get()->isIndexMod(mod, [mod, this](ModProfile::Mod::ModType type) mutable {
             switch (type) {
                 case ModProfile::Mod::ModType::index: {
-                    modProfileMods.push_back(ModProfile::Mod(
+                    modProfileMods.emplace_back(
                         mod->getID(), ModProfile::Mod::ModType::index
-                    ));
+                    );
                     break;
                 }
 
                 case ModProfile::Mod::ModType::packed: {
                     if (mod->getID() == "geode.loader") break;
 
-                    modProfileMods.push_back(ModProfile::Mod(
+                    modProfileMods.emplace_back(
                         mod->getID(), ModProfile::Mod::ModType::packed, "", mod->getPackagePath().string()
-                    ));
+                    );
                     break;
                 }
 
                 case ModProfile::Mod::ModType::remote: {
-
+                    modProfileMods.emplace_back(
+                        mod->getID(), ModProfile::Mod::ModType::remote, "", mod->getPackagePath().string()
+                    );
+                    break;
                 }
             }
         });
@@ -46,15 +55,18 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
                 .layout(menuLayout)
                 .scale(0.8f)
                 .anchorPoint({.5f, .0f})
+                .id("input-menu")
                 .collect();
 
     auto createComponent = [leftMenu, this](std::string label, CCPoint offset, TextInput*& store, CommonFilter filter = CommonFilter::Any, std::function<void(std::string const&)> func = nullptr) {
         auto labelNode = Build(CCLabelBMFont::create(label.c_str(), "bigFont.fnt"))
             .scale(0.65f)
+            .id(fmt::format("{}-label", label))
             .parent(leftMenu)
             .collect();
 
         auto inputNode = Build<TextInput>::create(200.f, label.c_str(), "chatFont.fnt")
+            .id(fmt::format("{}-input", label))
             .store(store)
             .parent(leftMenu)
             .collect();
@@ -73,6 +85,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
     auto verWarnBtn = CCMenuItemExt::createSpriteExtraWithFrameName("exMark_001.png", .45f, [this](CCMenuItemSpriteExtra*){
         FLAlertLayer::create("Invalid version", m_versionWarning.c_str(), "Ok")->show();
     });
+    verWarnBtn->setID("version-warn-btn");
     verWarnBtn->setVisible(false);
     createComponent("Pack Version", ccp(-100.f, -135.f), m_versionInput, CommonFilter::ID, [this, verWarnBtn](std::string const& text) {
         if (text == "") return verWarnBtn->setVisible(false);
@@ -89,6 +102,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
     m_buttonMenu->addChildAtPosition(verWarnBtn, Anchor::BottomLeft, {leftMenu->getPositionX() + m_versionInput->getContentWidth() / 2 - verWarnBtn->getContentWidth() - 11.25f, 17.5f + m_versionInput->getContentHeight()});
 
     auto logoSelectMenu = Build<CCMenu>::create()
+        .id("pack-button-menu")
         .layout(menuLayout)
         .width(width / 2)
         .height(height)
@@ -96,7 +110,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
         .anchorPoint({.5f, .5f})
         .collect();
 
-    this->m_logoPreview = Build<LazySprite>::create(CCSize{125.f, 125.f}, false).collect();
+    this->m_logoPreview = Build<LazySprite>::create(CCSize{125.f, 125.f}, false).id("logo-preview").collect();
     m_logoPreview->setAutoResize(true);
 
     auto logoSelectButton = Build<ButtonSprite>::create("Select Logo", "bigFont.fnt", "GJ_button_01.png", 0.8f)
@@ -108,6 +122,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
                   .files = {"*.png", "*.jpg"}}}};
             m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
         })
+    .id("logo-select-btn")
     .collect();
 
     auto exportButton = Build<ButtonSprite>::create("Export Pack", "bigFont.fnt", "GJ_button_01.png", 0.8f)
@@ -135,6 +150,7 @@ bool PackCreationPopup::setup(std::vector<geode::Mod*> const& mods) {
             };
             m_pickListener.setFilter(file::pick(file::PickMode::SaveFile, options));
         })
+        .id("export-btn")
         .collect();
 
     logoSelectMenu->addChild(logoSelectButton);
